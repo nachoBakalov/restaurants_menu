@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPERADMIN
+  OWNER
+  STAFF
+}
+
+enum OrderType {
+  TABLE
+  DELIVERY
+  TAKEAWAY
+}
+
+enum OrderStatus {
+  NEW
+  ACCEPTED
+  IN_PROGRESS
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIAL
+  EXPIRED
+  CANCELLED
+}
+
+enum Currency {
+  EUR
+  BGN
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  passwordHash  String
+  role          UserRole
+  restaurantId  String?
+  restaurant    Restaurant?    @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
+  refreshTokens RefreshToken[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([restaurantId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Restaurant {
+  id                       String                      @id @default(cuid())
+  name                     String
+  slug                     String                      @unique
+  logoUrl                  String?
+  coverImageUrl            String?
+  currencyPrimary          Currency                    @default(EUR)
+  currencySecondaryEnabled Boolean                     @default(false)
+  bgnDisabledAt            DateTime?
+  fxRateBgnToEur           Decimal?
+  users                    User[]
+  categories               Category[]
+  items                    Item[]
+  tables                   Table[]
+  orders                   Order[]
+  subscriptions            Subscription[]
+  featureOverrides         RestaurantFeatureOverride[]
+  createdAt                DateTime                    @default(now())
+  updatedAt                DateTime                    @updatedAt
+}
+
+model Category {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         String
+  sortOrder    Int        @default(0)
+  items        Item[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([restaurantId])
+}
+
+model Item {
+  id                 String      @id @default(cuid())
+  restaurantId       String
+  restaurant         Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categoryId         String
+  category           Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  name               String
+  description        String?
+  imageUrl           String?
+  allergens          String?
+  isAvailable        Boolean     @default(true)
+  priceEurCents      Int
+  priceBgnCents      Int?
+  promoPriceEurCents Int?
+  promoPriceBgnCents Int?
+  promoStartsAt      DateTime?
+  promoEndsAt        DateTime?
+  sortOrder          Int         @default(0)
+  orderItems         OrderItem[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@index([restaurantId, categoryId])
+}
+
+model Table {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  code         String
+  name         String?
+  orders       Order[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([restaurantId, code])
+  @@index([restaurantId])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  restaurantId    String
+  restaurant      Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  type            OrderType
+  status          OrderStatus @default(NEW)
+  tableId         String?
+  table           Table?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  deliveryAddress String?
+  phone           String?
+  customerName    String?
+  note            String?
+  totalEurCents   Int         @default(0)
+  totalBgnCents   Int?
+  orderItems      OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([restaurantId, status, createdAt])
+}
+
+model OrderItem {
+  id                String   @id @default(cuid())
+  orderId           String
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  itemId            String?
+  item              Item?    @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  nameSnapshot      String
+  qty               Int
+  unitPriceEurCents Int
+  unitPriceBgnCents Int?
+  note              String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([itemId])
+}
+
+model Plan {
+  id            String         @id @default(cuid())
+  key           String         @unique
+  name          String
+  planFeatures  PlanFeature[]
+  subscriptions Subscription[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Feature {
+  id                 String                      @id @default(cuid())
+  key                String                      @unique
+  planFeatures       PlanFeature[]
+  restaurantOverride RestaurantFeatureOverride[]
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+}
+
+model PlanFeature {
+  planId    String
+  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  featureId String
+  feature   Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([planId, featureId])
+  @@index([featureId])
+}
+
+model Subscription {
+  id           String             @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  planId       String
+  plan         Plan               @relation(fields: [planId], references: [id], onDelete: Restrict)
+  status       SubscriptionStatus
+  startsAt     DateTime
+  endsAt       DateTime
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([restaurantId])
+  @@index([planId])
+}
+
+model RestaurantFeatureOverride {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  featureId    String
+  feature      Feature    @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  enabled      Boolean
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([restaurantId, featureId])
+  @@index([restaurantId])
+  @@index([featureId])
+}

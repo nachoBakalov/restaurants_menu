@@ -1,0 +1,402 @@
+{
+  "info": {
+    "name": "Restaurants Menu Backend",
+    "_postman_id": "f81f2c90-6bd9-4ca7-bf4c-2de6bd7f7f10",
+    "description": "Ready-to-run collection for local backend testing (NestJS + Prisma).\n\nFlow:\n1) Run Auth/Login Superadmin and Auth/Login Owner\n2) Use Superadmin endpoints for billing\n3) Use Owner endpoints for admin menu/orders/qr\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "slug", "value": "master-demo" },
+    { "key": "restaurantId", "value": "" },
+    { "key": "featureKey", "value": "ORDERING" },
+    { "key": "orderId", "value": "" },
+    { "key": "categoryId", "value": "" },
+    { "key": "itemId", "value": "" },
+    { "key": "superadminEmail", "value": "master@local.test" },
+    { "key": "superadminPassword", "value": "Master123!" },
+    { "key": "ownerEmail", "value": "owner.master@local.test" },
+    { "key": "ownerPassword", "value": "Owner123!" },
+    { "key": "newOwnerEmail", "value": "owner.new@local.test" },
+    { "key": "newOwnerPassword", "value": "Owner123!" },
+    { "key": "newRestaurantName", "value": "New Restaurant" },
+    { "key": "newRestaurantSlug", "value": "new-restaurant" },
+    { "key": "ownerId", "value": "" },
+    { "key": "superadminAccessToken", "value": "" },
+    { "key": "ownerAccessToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login Superadmin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('superadminAccessToken', json.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{superadminEmail}}\",\n  \"password\": \"{{superadminPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('ownerAccessToken', json.accessToken);",
+                  "if (json.user && json.user.restaurantId) { pm.collectionVariables.set('restaurantId', json.user.restaurantId); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{ownerPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "GET /public/restaurants/:slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/restaurants/{{slug}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "restaurants", "{{slug}}"]
+            }
+          }
+        },
+        {
+          "name": "GET /public/restaurants/:slug/menu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/restaurants/{{slug}}/menu",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "restaurants", "{{slug}}", "menu"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Superadmin Billing",
+      "item": [
+        {
+          "name": "POST /admin/restaurants/create-with-owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.restaurant && json.restaurant.id) pm.collectionVariables.set('restaurantId', json.restaurant.id);",
+                  "  if (json.owner && json.owner.id) pm.collectionVariables.set('ownerId', json.owner.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{superadminAccessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newOwnerEmail}}\",\n  \"password\": \"{{newOwnerPassword}}\",\n  \"restaurantName\": \"{{newRestaurantName}}\",\n  \"slug\": \"{{newRestaurantSlug}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/restaurants/create-with-owner",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "restaurants", "create-with-owner"]
+            }
+          }
+        },
+        {
+          "name": "GET /admin/restaurants/:id/owners",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{superadminAccessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/restaurants/{{restaurantId}}/owners",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "restaurants", "{{restaurantId}}", "owners"]
+            }
+          }
+        },
+        {
+          "name": "POST /admin/owners/:id/reset-password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{superadminAccessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"Owner1234!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/owners/{{ownerId}}/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "owners", "{{ownerId}}", "reset-password"]
+            }
+          }
+        },
+        {
+          "name": "POST /admin/restaurants/:id/subscriptions",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{superadminAccessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planKey\": \"PRO\",\n  \"status\": \"ACTIVE\",\n  \"startsAt\": \"2026-02-23T00:00:00.000Z\",\n  \"endsAt\": \"2026-03-23T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/restaurants/{{restaurantId}}/subscriptions",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "restaurants", "{{restaurantId}}", "subscriptions"]
+            }
+          }
+        },
+        {
+          "name": "POST /admin/restaurants/:id/features/:featureKey/override",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{superadminAccessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/restaurants/{{restaurantId}}/features/{{featureKey}}/override",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "restaurants", "{{restaurantId}}", "features", "{{featureKey}}", "override"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Owner Admin",
+      "item": [
+        {
+          "name": "GET /admin/billing/features",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ownerAccessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/billing/features",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "billing", "features"]
+            }
+          }
+        },
+        {
+          "name": "GET /admin/qr/menu",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ownerAccessToken}}" },
+              { "key": "Accept", "value": "image/svg+xml" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/qr/menu",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "qr", "menu"]
+            }
+          }
+        },
+        {
+          "name": "GET /admin/orders?status=NEW",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ownerAccessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/orders?status=NEW",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "orders"],
+              "query": [
+                { "key": "status", "value": "NEW" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /admin/categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.id) pm.collectionVariables.set('categoryId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ownerAccessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Category\",\n  \"sortOrder\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "categories"]
+            }
+          }
+        },
+        {
+          "name": "GET /admin/categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ownerAccessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "categories"]
+            }
+          }
+        },
+        {
+          "name": "POST /admin/items",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.id) pm.collectionVariables.set('itemId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ownerAccessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"name\": \"Postman Item\",\n  \"description\": \"Manual testing item\",\n  \"isAvailable\": true,\n  \"prices\": {\n    \"priceEurCents\": 1299,\n    \"priceBgnCents\": 2540\n  },\n  \"sortOrder\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "items"]
+            }
+          }
+        },
+        {
+          "name": "GET /admin/items?categoryId={{categoryId}}",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{ownerAccessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/items?categoryId={{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "items"],
+              "query": [
+                { "key": "categoryId", "value": "{{categoryId}}" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
