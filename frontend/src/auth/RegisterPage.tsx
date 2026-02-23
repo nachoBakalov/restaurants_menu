@@ -1,33 +1,66 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from './auth.context';
 import { useT } from '../i18n/useT';
 import { LanguageSwitcher } from '../shared/components/LanguageSwitcher';
+import { ApiErrorAlert } from '../shared/components/ApiErrorAlert';
 import { Button } from '../shared/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../shared/ui/card';
+import { Input } from '../shared/ui/input';
+import { Label } from '../shared/ui/label';
 
 export function RegisterPage() {
-  const { isAuthenticated, loginPlaceholder } = useAuth();
+  const { isAuthenticated, registerOwner } = useAuth();
+  const navigate = useNavigate();
   const { t } = useT();
+  const [submitError, setSubmitError] = useState<unknown>(null);
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [restaurantName, setRestaurantName] = useState('');
-  const [slug, setSlug] = useState('');
+  const schema = useMemo(
+    () =>
+      z.object({
+        email: z.string().email(t('auth.validation.email')),
+        password: z.string().min(6, t('auth.validation.passwordMin')),
+        restaurantName: z.string().min(1, t('auth.validation.required')),
+        slug: z
+          .string()
+          .min(1, t('auth.validation.required'))
+          .regex(/^[a-z0-9-]+$/, t('auth.validation.slugPattern')),
+      }),
+    [t],
+  );
+
+  type RegisterFormValues = z.infer<typeof schema>;
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      email: '',
+      password: '',
+      restaurantName: '',
+      slug: '',
+    },
+  });
 
   if (isAuthenticated) {
     return <Navigate to="/admin" replace />;
   }
 
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-
-    if (!email || !password || !restaurantName || !slug) {
-      return;
+  const onSubmit = async (values: RegisterFormValues) => {
+    setSubmitError(null);
+    try {
+      await registerOwner(values);
+      navigate('/admin', { replace: true });
+    } catch (error) {
+      setSubmitError(error);
     }
-
-    loginPlaceholder();
   };
 
   return (
@@ -39,67 +72,65 @@ export function RegisterPage() {
         <CardHeader>
           <CardTitle>{t('auth.registerTitle')}</CardTitle>
           <CardDescription>{t('auth.registerDescription')}</CardDescription>
+          <ApiErrorAlert error={submitError} />
         </CardHeader>
         <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="register-email">
+              <Label htmlFor="register-email">
                 {t('auth.email')}
-              </label>
-              <input
+              </Label>
+              <Input
                 id="register-email"
                 type="email"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 placeholder={t('auth.emailPlaceholder')}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                {...register('email')}
               />
+              {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="register-password">
+              <Label htmlFor="register-password">
                 {t('auth.password')}
-              </label>
-              <input
+              </Label>
+              <Input
                 id="register-password"
                 type="password"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 placeholder={t('auth.passwordPlaceholder')}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                {...register('password')}
               />
+              {errors.password ? <p className="text-xs text-destructive">{errors.password.message}</p> : null}
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="restaurant-name">
+              <Label htmlFor="restaurant-name">
                 {t('auth.restaurantName')}
-              </label>
-              <input
+              </Label>
+              <Input
                 id="restaurant-name"
                 type="text"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 placeholder={t('auth.restaurantNamePlaceholder')}
-                value={restaurantName}
-                onChange={(event) => setRestaurantName(event.target.value)}
+                {...register('restaurantName')}
               />
+              {errors.restaurantName ? <p className="text-xs text-destructive">{errors.restaurantName.message}</p> : null}
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="restaurant-slug">
+              <Label htmlFor="restaurant-slug">
                 {t('auth.slug')}
-              </label>
-              <input
+              </Label>
+              <Input
                 id="restaurant-slug"
                 type="text"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 placeholder={t('auth.slugPlaceholder')}
-                value={slug}
-                onChange={(event) => setSlug(event.target.value)}
+                {...register('slug')}
               />
+              <p className="text-xs text-muted-foreground">{t('auth.slugHelper')}</p>
+              {errors.slug ? <p className="text-xs text-destructive">{errors.slug.message}</p> : null}
             </div>
 
-            <Button className="w-full" type="submit">
-              {t('auth.registerButton')}
+            <Button className="w-full" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? t('auth.loading') : t('auth.registerButton')}
             </Button>
           </form>
         </CardContent>

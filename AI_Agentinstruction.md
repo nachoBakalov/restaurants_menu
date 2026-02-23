@@ -249,6 +249,31 @@
 	- `frontend/src/admin/dashboard/DashboardPage.tsx`
 - Речниците са разширени с нужните flat ключове и placeholder-и в `bg.ts` и `en.ts`.
 
+### 9.17 Frontend auth integration (NestJS backend)
+
+- Имплементирана е реална frontend auth интеграция към backend endpoint-ите:
+	- `POST /auth/login`
+	- `POST /auth/register-owner`
+	- `POST /auth/refresh`
+	- `GET /auth/me` (опционално, fail-safe при липса)
+- Обновен е token store с ключове:
+	- `fy_access_token`
+	- `fy_refresh_token`
+- Axios client има:
+	- автоматично `Authorization: Bearer <accessToken>`
+	- 401 refresh flow с anti-loop `_retry` флаг
+	- concurrency-safe refresh lock (`refreshPromise`), за да няма паралелни refresh заявки
+	- logout event (`auth:logout`) при refresh failure
+- Добавени са auth API wrapper и типове:
+	- `frontend/src/auth/auth.api.ts`
+	- `frontend/src/auth/auth.types.ts`
+- Auth context е заменен с реална логика (`login`, `registerOwner`, `logout`, bootstrap с `me`).
+- `register-owner` обработва robust двата backend сценария:
+	- tokens + user директно
+	- `{ ok: true }` -> auto-login със същите credentials
+- Login/Register UI е мигриран към `react-hook-form + zod` с валидации и BG error съобщения.
+- Добавени са shadcn-style `Input` и `Label` компоненти + `ApiErrorAlert` за backend error envelope.
+
 ## 10) Changelog template
 
 Използвам този шаблон за всяка завършена задача:
@@ -373,6 +398,13 @@
 - Промени: `getLang/setLang/t` API, fallback логика (`selected -> bg -> key`), `useT()` re-render механизъм, BG/EN switcher, подмяна на hardcoded UI низове с `t("...")`.
 - Validation: pnpm build (OK)
 - Next: Свързване на real backend auth responses с i18n-ready error messages.
+
+### [2026-02-23] Frontend auth integration + refresh flow
+- Задача: Свързване на frontend auth към реалните NestJS endpoint-и с token persistence, refresh retry и form validation.
+- Файлове: frontend/src/api/apiClient.ts, frontend/src/auth/tokenStore.ts, frontend/src/auth/auth.api.ts, frontend/src/auth/auth.types.ts, frontend/src/auth/auth.context.tsx, frontend/src/admin/layout/RequireAuth.tsx, frontend/src/auth/LoginPage.tsx, frontend/src/auth/RegisterPage.tsx, frontend/src/shared/components/ApiErrorAlert.tsx, frontend/src/shared/ui/input.tsx, frontend/src/shared/ui/label.tsx, frontend/src/i18n/translations/bg.ts, frontend/src/i18n/translations/en.ts, frontend/package.json
+- Промени: request/response interceptors с concurrency-safe refresh lock, robust register-owner handling (auto-login fallback), RHF+zod форми, BG error UX, и auth logout event за safe redirect.
+- Validation: pnpm build (OK)
+- Next: Добавяне на guard за role-based frontend маршрути (например SUPERADMIN-only views) при следващ scope.
 ```
 
 ## 11) Known limitations (кратко)
@@ -384,7 +416,7 @@
 - Липсва dedicated regression suite за precedence матрицата (override vs subscription status vs plan mapping).
 - QR e2e проверките валидират SVG формат, но не декодират/асъртват вътрешния URL payload (`BASE_URL/slug`) в самия QR код.
 - За SUPERADMIN list/create admin endpoint-и е нужен `restaurantId` query scope; липсва централен auto-scope механизъм по slug/name.
-- Frontend auth е placeholder (token симулация през localStorage), без реални API заявки в текущата стъпка.
+- Липсват frontend e2e/integration тестове за auth refresh concurrency и logout event поведение (в момента е валидирано чрез build + manual flow).
 
 ## 12) Superadmin quick playbook (onboarding)
 
