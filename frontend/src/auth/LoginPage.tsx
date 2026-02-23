@@ -2,12 +2,14 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from './auth.context';
-import { t } from '../i18n/i18n';
+import { useT } from '../i18n/useT';
+import { LanguageSwitcher } from '../shared/components/LanguageSwitcher';
 import { Button } from '../shared/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../shared/ui/card';
 
 export function LoginPage() {
   const { isAuthenticated, loginPlaceholder } = useAuth();
+  const { t } = useT();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -26,6 +28,9 @@ export function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+      <div className="absolute right-4 top-4">
+        <LanguageSwitcher />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{t('auth.loginTitle')}</CardTitle>
@@ -41,7 +46,7 @@ export function LoginPage() {
                 id="email"
                 type="email"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                placeholder="master@local.test"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
               />
@@ -54,7 +59,7 @@ export function LoginPage() {
                 id="password"
                 type="password"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                placeholder="********"
+                placeholder={t('auth.passwordPlaceholder')}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />

@@ -1,8 +1,10 @@
-import { t } from '../../i18n/i18n';
+import { useT } from '../../i18n/useT';
 import { Button } from '../../shared/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../shared/ui/card';
 
 export function DashboardPage() {
+  const { t } = useT();
+
   return (
     <Card>
       <CardHeader>

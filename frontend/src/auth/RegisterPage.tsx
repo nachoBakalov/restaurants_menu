@@ -2,12 +2,14 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from './auth.context';
-import { t } from '../i18n/i18n';
+import { useT } from '../i18n/useT';
+import { LanguageSwitcher } from '../shared/components/LanguageSwitcher';
 import { Button } from '../shared/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../shared/ui/card';
 
 export function RegisterPage() {
   const { isAuthenticated, loginPlaceholder } = useAuth();
+  const { t } = useT();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,6 +32,9 @@ export function RegisterPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+      <div className="absolute right-4 top-4">
+        <LanguageSwitcher />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{t('auth.registerTitle')}</CardTitle>
@@ -45,6 +50,7 @@ export function RegisterPage() {
                 id="register-email"
                 type="email"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
               />
@@ -58,6 +64,7 @@ export function RegisterPage() {
                 id="register-password"
                 type="password"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                placeholder={t('auth.passwordPlaceholder')}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
@@ -71,6 +78,7 @@ export function RegisterPage() {
                 id="restaurant-name"
                 type="text"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                placeholder={t('auth.restaurantNamePlaceholder')}
                 value={restaurantName}
                 onChange={(event) => setRestaurantName(event.target.value)}
               />
@@ -84,6 +92,7 @@ export function RegisterPage() {
                 id="restaurant-slug"
                 type="text"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                placeholder={t('auth.slugPlaceholder')}
                 value={slug}
                 onChange={(event) => setSlug(event.target.value)}
               />
