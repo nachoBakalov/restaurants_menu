@@ -274,6 +274,33 @@
 - Login/Register UI е мигриран към `react-hook-form + zod` с валидации и BG error съобщения.
 - Добавени са shadcn-style `Input` и `Label` компоненти + `ApiErrorAlert` за backend error envelope.
 
+### 9.18 Frontend SaaS admin shell (layout + navigation)
+
+- Имплементиран е професионален admin shell за `/admin/*`:
+	- desktop left sidebar navigation
+	- sticky top header
+	- центриран content container (`max-w-6xl`)
+	- soft neutral background
+- Добавени са admin placeholder маршрути:
+	- `/admin` (Dashboard)
+	- `/admin/menu`
+	- `/admin/orders`
+	- `/admin/billing`
+- `RequireAuth` е разширен с `?next=` redirect support:
+	- неаутентикиран потребител -> `/admin/login?next=<path>`
+	- след login/register -> връщане към `next` (ако е валиден `/admin` path)
+- При token + loading user bootstrap guard-ът показва localized loading state (`admin.common.loading`).
+- В header има user dropdown menu с:
+	- email
+	- роля (`superadmin/owner/staff`)
+	- logout action
+- Навигацията има active link styling и mobile UX:
+	- burger бутон
+	- `Sheet` sidebar за mobile
+	- `DropdownMenu` за user menu
+	- `Separator` за layout разделители
+- Dashboard placeholder е обновен с SaaS-style card секции и quick action бутони.
+
 ## 10) Changelog template
 
 Използвам този шаблон за всяка завършена задача:
@@ -405,6 +432,13 @@
 - Промени: request/response interceptors с concurrency-safe refresh lock, robust register-owner handling (auto-login fallback), RHF+zod форми, BG error UX, и auth logout event за safe redirect.
 - Validation: pnpm build (OK)
 - Next: Добавяне на guard за role-based frontend маршрути (например SUPERADMIN-only views) при следващ scope.
+
+### [2026-02-23] Frontend SaaS AdminLayout + protected admin shell
+- Задача: Изграждане на професионален SaaS admin shell с sidebar/header/mobile navigation и protected `/admin/*` маршрути.
+- Файлове: frontend/src/admin/layout/AdminLayout.tsx, frontend/src/admin/layout/RequireAuth.tsx, frontend/src/app/router.tsx, frontend/src/admin/dashboard/DashboardPage.tsx, frontend/src/admin/menu/MenuPage.tsx, frontend/src/admin/orders/OrdersPage.tsx, frontend/src/admin/billing/BillingPage.tsx, frontend/src/shared/ui/dropdown-menu.tsx, frontend/src/shared/ui/sheet.tsx, frontend/src/shared/ui/separator.tsx, frontend/src/auth/LoginPage.tsx, frontend/src/auth/RegisterPage.tsx, frontend/src/i18n/translations/bg.ts, frontend/src/i18n/translations/en.ts, frontend/package.json
+- Промени: desktop/mobile shell, active nav styling, user dropdown (email/role/logout), `?next=` redirect flow, нови admin placeholder pages/routes, и i18n ключове за всички видими label-и.
+- Validation: pnpm build (OK)
+- Next: По избор — role-based visibility на nav items (напр. Billing само за OWNER/SUPERADMIN).
 ```
 
 ## 11) Known limitations (кратко)

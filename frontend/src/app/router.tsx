@@ -1,7 +1,10 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
+import { BillingPage } from '../admin/billing/BillingPage';
 import { DashboardPage } from '../admin/dashboard/DashboardPage';
 import { AdminLayout } from '../admin/layout/AdminLayout';
 import { RequireAuth } from '../admin/layout/RequireAuth';
+import { MenuPage } from '../admin/menu/MenuPage';
+import { OrdersPage } from '../admin/orders/OrdersPage';
 import { LoginPage } from '../auth/LoginPage';
 import { RegisterPage } from '../auth/RegisterPage';
 
@@ -25,6 +28,18 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <DashboardPage />,
+      },
+      {
+        path: 'menu',
+        element: <MenuPage />,
+      },
+      {
+        path: 'orders',
+        element: <OrdersPage />,
+      },
+      {
+        path: 'billing',
+        element: <BillingPage />,
       },
     ],
   },

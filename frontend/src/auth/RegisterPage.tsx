@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,8 +17,11 @@ import { Label } from '../shared/ui/label';
 export function RegisterPage() {
   const { isAuthenticated, registerOwner } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useT();
   const [submitError, setSubmitError] = useState<unknown>(null);
+  const nextParam = searchParams.get('next');
+  const nextPath = nextParam && nextParam.startsWith('/admin') ? nextParam : '/admin';
 
   const schema = useMemo(
     () =>
@@ -50,14 +54,14 @@ export function RegisterPage() {
   });
 
   if (isAuthenticated) {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to={nextPath} replace />;
   }
 
   const onSubmit = async (values: RegisterFormValues) => {
     setSubmitError(null);
     try {
       await registerOwner(values);
-      navigate('/admin', { replace: true });
+      navigate(nextPath, { replace: true });
     } catch (error) {
       setSubmitError(error);
     }
