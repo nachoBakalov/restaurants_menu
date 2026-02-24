@@ -69,6 +69,7 @@ export const bg = {
   'admin.menu.confirmDeleteDesc': 'Това действие е необратимо.',
   'admin.menu.fields.name': 'Име',
   'admin.menu.fields.description': 'Описание',
+  'admin.menu.fields.imageUrl': 'URL на изображение',
   'admin.menu.fields.sortOrder': 'Ред',
   'admin.menu.fields.available': 'Наличен',
   'admin.menu.fields.priceEur': 'Цена EUR',

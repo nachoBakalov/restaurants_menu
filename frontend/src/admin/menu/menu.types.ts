@@ -9,6 +9,7 @@ export type Item = {
   categoryId: string;
   name: string;
   description?: string;
+  imageUrl?: string | null;
   isAvailable: boolean;
   sortOrder: number;
   prices?: {
@@ -35,6 +36,7 @@ export type CreateItemDto = {
   categoryId: string;
   name: string;
   description?: string;
+  imageUrl?: string | null;
   isAvailable?: boolean;
   sortOrder?: number;
   prices: {
@@ -51,6 +53,7 @@ export type UpdateItemDto = {
   categoryId?: string;
   name?: string;
   description?: string;
+  imageUrl?: string | null;
   isAvailable?: boolean;
   sortOrder?: number;
   prices?: {

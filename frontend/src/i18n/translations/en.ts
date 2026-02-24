@@ -69,6 +69,7 @@ export const en = {
   'admin.menu.confirmDeleteDesc': 'This action cannot be undone.',
   'admin.menu.fields.name': 'Name',
   'admin.menu.fields.description': 'Description',
+  'admin.menu.fields.imageUrl': 'Image URL',
   'admin.menu.fields.sortOrder': 'Sort order',
   'admin.menu.fields.available': 'Available',
   'admin.menu.fields.priceEur': 'Price EUR',

@@ -25,6 +25,7 @@ type ItemDialogProps = {
 type ItemFormValues = {
   name: string;
   description: string;
+  imageUrl: string;
   sortOrder: number;
   isAvailable: boolean;
   priceEur: string;
@@ -84,6 +85,7 @@ export function ItemDialog({
       z.object({
         name: z.string().trim().min(2, t('auth.validation.required')),
         description: z.string(),
+        imageUrl: z.string(),
         sortOrder: z.number().min(0, t('auth.validation.required')),
         isAvailable: z.boolean(),
         priceEur: z
@@ -118,6 +120,7 @@ export function ItemDialog({
     defaultValues: {
       name: item?.name ?? '',
       description: item?.description ?? '',
+      imageUrl: item?.imageUrl ?? '',
       sortOrder: item?.sortOrder ?? 0,
       isAvailable: item?.isAvailable ?? true,
       priceEur: centsToDecimal(item?.prices?.priceEurCents),
@@ -127,9 +130,11 @@ export function ItemDialog({
 
   const watchedPriceEur = watch('priceEur');
   const watchedPromoEur = watch('promoEur');
+  const watchedImageUrl = watch('imageUrl');
 
   const priceBgnPreview = centsToDecimal(eurCentsToBgnCents(toCents(watchedPriceEur ?? '')));
   const promoBgnPreview = centsToDecimal(eurCentsToBgnCents(toCents(watchedPromoEur ?? '')));
+  const imagePreview = watchedImageUrl.trim();
 
   useEffect(() => {
     if (!open) {
@@ -139,6 +144,7 @@ export function ItemDialog({
     reset({
       name: item?.name ?? '',
       description: item?.description ?? '',
+      imageUrl: item?.imageUrl ?? '',
       sortOrder: item?.sortOrder ?? 0,
       isAvailable: item?.isAvailable ?? true,
       priceEur: centsToDecimal(item?.prices?.priceEurCents),
@@ -151,6 +157,7 @@ export function ItemDialog({
     const priceBgnCents = eurCentsToBgnCents(priceEurCents);
     const promoPriceEurCents = toCents(values.promoEur);
     const promoPriceBgnCents = eurCentsToBgnCents(promoPriceEurCents);
+    const normalizedImageUrl = values.imageUrl.trim() || null;
 
     if (priceEurCents === null) {
       return;
@@ -161,6 +168,7 @@ export function ItemDialog({
         categoryId,
         name: values.name.trim(),
         description: values.description.trim() || undefined,
+        imageUrl: normalizedImageUrl,
         isAvailable: values.isAvailable,
         sortOrder: values.sortOrder,
         prices: {
@@ -193,6 +201,11 @@ export function ItemDialog({
 
     if (!sameOrEmpty(values.description, item.description)) {
       updatePayload.description = values.description.trim() || undefined;
+    }
+
+    const initialImageUrl = item.imageUrl ?? null;
+    if (normalizedImageUrl !== initialImageUrl) {
+      updatePayload.imageUrl = normalizedImageUrl;
     }
 
     if (values.sortOrder !== item.sortOrder) {
@@ -253,6 +266,14 @@ export function ItemDialog({
               {...register('description')}
               disabled={isSubmitting}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="item-imageUrl">{t('admin.menu.fields.imageUrl')}</Label>
+            <Input id="item-imageUrl" placeholder="https://..." {...register('imageUrl')} disabled={isSubmitting} />
+            {imagePreview ? (
+              <img src={imagePreview} alt={watch('name') || 'item preview'} className="h-16 w-16 rounded-md border object-cover" />
+            ) : null}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
