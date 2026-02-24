@@ -453,6 +453,13 @@
 - Промени: Добавени са resilient parser-и за двата API response формата (`{ features: [...] }` и `[...]`), React Query hook за feature flags, disabled Orders nav + badge „Изисква план“, locked state в Orders page с CTA към Billing, и Billing placeholder с feature list + loading/error UX.
 - Validation: pnpm build (OK)
 - Next: По избор — централизиране на feature gating с route-level guard helper за бъдещи feature ключове.
+
+### [2026-02-24] Frontend Admin Menu Builder (categories + items CRUD)
+- Задача: Имплементация на реална SaaS-style страница `/admin/menu` за управление на категории и артикули с пълен CRUD flow.
+- Файлове: frontend/src/admin/menu/MenuPage.tsx, frontend/src/admin/menu/menu.types.ts, frontend/src/admin/menu/menu.api.ts, frontend/src/admin/menu/components/CategoryList.tsx, frontend/src/admin/menu/components/ItemList.tsx, frontend/src/admin/menu/components/CategoryDialog.tsx, frontend/src/admin/menu/components/ItemDialog.tsx, frontend/src/admin/menu/components/ConfirmDialog.tsx, frontend/src/shared/ui/dialog.tsx, frontend/src/shared/ui/alert-dialog.tsx, frontend/src/i18n/translations/bg.ts, frontend/src/i18n/translations/en.ts, frontend/README.md, frontend/package.json
+- Промени: Добавени са wrappers за backend endpoint-ите (`/admin/categories`, `/admin/items`), query cache ключове `['categories']` и `['items', categoryId]`, auto-select на първа категория, dialogs за create/edit, confirm modal за delete, availability toggle чрез PATCH, и RHF+zod валидация с decimal->cents трансформация за EUR/BGN цени и promo полета.
+- Validation: pnpm build (OK)
+- Next: По избор — добавяне на drag-and-drop reordering UI (sortOrder) и debounced inline edit за по-бърза оперативна работа.
 ```
 
 ## 11) Known limitations (кратко)

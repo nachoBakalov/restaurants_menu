@@ -6,6 +6,10 @@ This template provides a minimal setup to get React working in Vite with HMR and
 
 ### 2026-02-24
 
+- Implemented Admin Menu Builder page (`/admin/menu`) with categories/items CRUD, availability toggle, and create/edit/delete dialogs.
+- Added TanStack Query data layer for menu management (`['categories']`, `['items', categoryId]`) with automatic invalidation after mutations.
+- Added form validation (`react-hook-form + zod`) for category/item dialogs, including EUR/BGN prices and optional promo fields.
+
 - Updated wildcard routing: `*` now renders a dedicated `NotFoundPage` (404) instead of redirecting to login.
 - Hardened `RequireAuth` edge-case handling: when a token exists but `user` is `null` and `loading` is `false`, session is treated as invalid and user is redirected to `/admin/login?next=...`.
 
