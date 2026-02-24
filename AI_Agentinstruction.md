@@ -461,6 +461,13 @@
 - Validation: pnpm build (OK)
 - Next: По избор — добавяне на drag-and-drop reordering UI (sortOrder) и debounced inline edit за по-бърза оперативна работа.
 
+### [2026-02-24] Frontend item edit prefill fix (menu API normalization)
+- Задача: Корекция на празните price полета в `ItemDialog` при edit, когато backend връща flat pricing полета.
+- Файлове: frontend/src/admin/menu/menu.api.ts
+- Промени: Добавен е `normalizeItem` mapper, който преобразува flat payload (`priceEurCents`, `priceBgnCents`, `promoPriceEurCents`, `promoPriceBgnCents`) към frontend nested shape (`prices`, `promo`), използван от `fetchItems/createItem/updateItem`.
+- Validation: pnpm build (OK)
+- Next: По избор — централизиране на DTO mappers в отделен `mappers/` слой за всички admin ресурси.
+
 ### [2026-02-24] Backend category delete fix (with existing items)
 - Задача: Премахване на 400 грешката при `DELETE /admin/categories/:id`, когато категорията има свързани items.
 - Файлове: backend/src/admin-menu/admin-menu.service.ts
