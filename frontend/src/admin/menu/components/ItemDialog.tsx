@@ -28,10 +28,10 @@ type ItemFormValues = {
   sortOrder: number;
   isAvailable: boolean;
   priceEur: string;
-  priceBgn: string;
   promoEur: string;
-  promoBgn: string;
 };
+
+const FX = 1.95583;
 
 function centsToDecimal(cents?: number | null): string {
   if (typeof cents !== 'number') {
@@ -52,6 +52,14 @@ function toCents(value: string): number | null {
   }
 
   return Math.round(numeric * 100);
+}
+
+function eurCentsToBgnCents(eurCents: number | null): number | null {
+  if (eurCents === null) {
+    return null;
+  }
+
+  return Math.round(eurCents * FX);
 }
 
 function sameOrEmpty(left?: string, right?: string): boolean {
@@ -86,25 +94,7 @@ export function ItemDialog({
             const cents = toCents(value);
             return cents !== null && cents > 0;
           }, t('auth.validation.required')),
-        priceBgn: z
-          .string()
-          .refine((value) => {
-            if (!value || !value.trim()) {
-              return true;
-            }
-            const cents = toCents(value);
-            return cents !== null && cents > 0;
-          }, t('auth.validation.required')),
         promoEur: z
-          .string()
-          .refine((value) => {
-            if (!value || !value.trim()) {
-              return true;
-            }
-            const cents = toCents(value);
-            return cents !== null && cents > 0;
-          }, t('auth.validation.required')),
-        promoBgn: z
           .string()
           .refine((value) => {
             if (!value || !value.trim()) {
@@ -121,6 +111,7 @@ export function ItemDialog({
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<ItemFormValues>({
     resolver: zodResolver(schema),
@@ -130,11 +121,15 @@ export function ItemDialog({
       sortOrder: item?.sortOrder ?? 0,
       isAvailable: item?.isAvailable ?? true,
       priceEur: centsToDecimal(item?.prices?.priceEurCents),
-      priceBgn: centsToDecimal(item?.prices?.priceBgnCents),
       promoEur: centsToDecimal(item?.promo?.promoPriceEurCents),
-      promoBgn: centsToDecimal(item?.promo?.promoPriceBgnCents),
     },
   });
+
+  const watchedPriceEur = watch('priceEur');
+  const watchedPromoEur = watch('promoEur');
+
+  const priceBgnPreview = centsToDecimal(eurCentsToBgnCents(toCents(watchedPriceEur ?? '')));
+  const promoBgnPreview = centsToDecimal(eurCentsToBgnCents(toCents(watchedPromoEur ?? '')));
 
   useEffect(() => {
     if (!open) {
@@ -147,17 +142,15 @@ export function ItemDialog({
       sortOrder: item?.sortOrder ?? 0,
       isAvailable: item?.isAvailable ?? true,
       priceEur: centsToDecimal(item?.prices?.priceEurCents),
-      priceBgn: centsToDecimal(item?.prices?.priceBgnCents),
       promoEur: centsToDecimal(item?.promo?.promoPriceEurCents),
-      promoBgn: centsToDecimal(item?.promo?.promoPriceBgnCents),
     });
   }, [item, open, reset]);
 
   const submit = handleSubmit(async (values) => {
     const priceEurCents = toCents(values.priceEur);
-    const priceBgnCents = toCents(values.priceBgn);
+    const priceBgnCents = eurCentsToBgnCents(priceEurCents);
     const promoPriceEurCents = toCents(values.promoEur);
-    const promoPriceBgnCents = toCents(values.promoBgn);
+    const promoPriceBgnCents = eurCentsToBgnCents(promoPriceEurCents);
 
     if (priceEurCents === null) {
       return;
@@ -284,8 +277,7 @@ export function ItemDialog({
 
             <div className="space-y-2">
               <Label htmlFor="item-priceBgn">{t('admin.menu.fields.priceBgn')}</Label>
-              <Input id="item-priceBgn" placeholder="19.53" {...register('priceBgn')} disabled={isSubmitting} />
-              {errors.priceBgn ? <p className="text-xs text-destructive">{errors.priceBgn.message}</p> : null}
+              <Input id="item-priceBgn" placeholder="19.53" value={priceBgnPreview} readOnly disabled />
             </div>
           </div>
 
@@ -298,8 +290,7 @@ export function ItemDialog({
 
             <div className="space-y-2">
               <Label htmlFor="item-promoBgn">{t('admin.menu.fields.promoBgn')}</Label>
-              <Input id="item-promoBgn" placeholder="15.63" {...register('promoBgn')} disabled={isSubmitting} />
-              {errors.promoBgn ? <p className="text-xs text-destructive">{errors.promoBgn.message}</p> : null}
+              <Input id="item-promoBgn" placeholder="15.63" value={promoBgnPreview} readOnly disabled />
             </div>
           </div>
 
