@@ -1,4 +1,4 @@
-import { Navigate, createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import { BillingPage } from '../admin/billing/BillingPage';
 import { DashboardPage } from '../admin/dashboard/DashboardPage';
 import { AdminLayout } from '../admin/layout/AdminLayout';
@@ -7,6 +7,7 @@ import { MenuPage } from '../admin/menu/MenuPage';
 import { OrdersPage } from '../admin/orders/OrdersPage';
 import { LoginPage } from '../auth/LoginPage';
 import { RegisterPage } from '../auth/RegisterPage';
+import { NotFoundPage } from './NotFoundPage';
 
 export const router = createBrowserRouter([
   {
@@ -45,6 +46,6 @@ export const router = createBrowserRouter([
   },
   {
     path: '*',
-    element: <Navigate to="/admin/login" replace />,
+    element: <NotFoundPage />,
   },
 ]);

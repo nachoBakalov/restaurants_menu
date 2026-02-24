@@ -439,6 +439,13 @@
 - Промени: desktop/mobile shell, active nav styling, user dropdown (email/role/logout), `?next=` redirect flow, нови admin placeholder pages/routes, и i18n ключове за всички видими label-и.
 - Validation: pnpm build (OK)
 - Next: По избор — role-based visibility на nav items (напр. Billing само за OWNER/SUPERADMIN).
+
+### [2026-02-23] Frontend auth guard edge-case + NotFound wildcard
+- Задача: Корекция на edge-case в `RequireAuth` и смяна на wildcard routing behavior към реална 404 страница.
+- Файлове: frontend/src/admin/layout/RequireAuth.tsx, frontend/src/app/router.tsx, frontend/src/app/NotFoundPage.tsx
+- Промени: При наличен token + `user === null` + `loading === false` guard-ът третира сесията като невалидна и пренасочва към login с `?next=`; wildcard route (`*`) вече рендерира `NotFoundPage`, вместо redirect към login.
+- Validation: pnpm build (OK)
+- Next: По избор — добавяне на user-facing CTA в `NotFoundPage` (напр. бутон към dashboard/login) според UX политика.
 ```
 
 ## 11) Known limitations (кратко)
