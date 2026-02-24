@@ -1,9 +1,11 @@
 import { CreditCard, LayoutDashboard, Menu as MenuIcon, ShoppingCart, UtensilsCrossed } from 'lucide-react';
 import type { ComponentType } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useFeatures } from '../../billing/useFeatures';
 import { useAuth } from '../../auth/auth.context';
 import { useT } from '../../i18n/useT';
 import { LanguageSwitcher } from '../../shared/components/LanguageSwitcher';
+import { Badge } from '../../shared/ui/badge';
 import { Button } from '../../shared/ui/button';
 import {
   DropdownMenu,
@@ -21,18 +23,29 @@ type NavItem = {
   to: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
+  disabled?: boolean;
+  badge?: string;
 };
 
 export function AdminLayout() {
   const { logout, user } = useAuth();
   const { t } = useT();
+  const { isEnabled, isLoading } = useFeatures();
   const location = useLocation();
   const navigate = useNavigate();
+  const orderingEnabled = isEnabled('ORDERING');
+  const ordersDisabled = !isLoading && !orderingEnabled;
 
   const navItems: NavItem[] = [
     { to: '/admin', label: t('admin.nav.dashboard'), icon: LayoutDashboard },
     { to: '/admin/menu', label: t('admin.nav.menu'), icon: UtensilsCrossed },
-    { to: '/admin/orders', label: t('admin.nav.orders'), icon: ShoppingCart },
+    {
+      to: '/admin/orders',
+      label: t('admin.nav.orders'),
+      icon: ShoppingCart,
+      disabled: ordersDisabled,
+      badge: ordersDisabled ? t('admin.nav.ordersLockedBadge') : undefined,
+    },
     { to: '/admin/billing', label: t('admin.nav.billing'), icon: CreditCard },
   ];
 
@@ -72,14 +85,30 @@ export function AdminLayout() {
       <nav className="flex-1 space-y-1 px-1">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const sharedClass = ({ isActive }: { isActive: boolean }) =>
+          const enabledNavClass = ({ isActive }: { isActive: boolean }) =>
             [
               'flex h-10 items-center gap-2 rounded-md px-3 text-sm transition-colors',
               isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
             ].join(' ');
 
+          const disabledNavClass = 'flex h-10 w-full items-center gap-2 rounded-md px-3 text-sm text-muted-foreground/60 opacity-70';
+
+          if (item.disabled) {
+            return (
+              <div key={item.to} className={disabledNavClass} aria-disabled="true" title={item.badge}>
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
+                {item.badge ? (
+                  <Badge variant="secondary" className="ml-auto">
+                    {item.badge}
+                  </Badge>
+                ) : null}
+              </div>
+            );
+          }
+
           const linkNode = (
-            <NavLink to={item.to} end={item.to === '/admin'} className={sharedClass}>
+            <NavLink to={item.to} end={item.to === '/admin'} className={enabledNavClass}>
               <Icon className="h-4 w-4" />
               <span>{item.label}</span>
             </NavLink>

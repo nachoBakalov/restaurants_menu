@@ -446,6 +446,13 @@
 - Промени: При наличен token + `user === null` + `loading === false` guard-ът третира сесията като невалидна и пренасочва към login с `?next=`; wildcard route (`*`) вече рендерира `NotFoundPage`, вместо redirect към login.
 - Validation: pnpm build (OK)
 - Next: По избор — добавяне на user-facing CTA в `NotFoundPage` (напр. бутон към dashboard/login) според UX политика.
+
+### [2026-02-24] Frontend ORDERING feature gating (Admin UI)
+- Задача: Имплементация на feature gate за ORDERING в admin интерфейса, базирана на `GET /admin/billing/features`.
+- Файлове: frontend/src/billing/billing.types.ts, frontend/src/billing/billing.api.ts, frontend/src/billing/useFeatures.ts, frontend/src/admin/layout/AdminLayout.tsx, frontend/src/admin/orders/OrdersPage.tsx, frontend/src/admin/billing/BillingPage.tsx, frontend/src/shared/ui/badge.tsx, frontend/src/shared/ui/skeleton.tsx, frontend/src/i18n/translations/bg.ts, frontend/src/i18n/translations/en.ts, frontend/README.md
+- Промени: Добавени са resilient parser-и за двата API response формата (`{ features: [...] }` и `[...]`), React Query hook за feature flags, disabled Orders nav + badge „Изисква план“, locked state в Orders page с CTA към Billing, и Billing placeholder с feature list + loading/error UX.
+- Validation: pnpm build (OK)
+- Next: По избор — централизиране на feature gating с route-level guard helper за бъдещи feature ключове.
 ```
 
 ## 11) Known limitations (кратко)

@@ -4,6 +4,11 @@ This template provides a minimal setup to get React working in Vite with HMR and
 
 ## Release notes
 
+### 2026-02-24
+
+- Updated wildcard routing: `*` now renders a dedicated `NotFoundPage` (404) instead of redirecting to login.
+- Hardened `RequireAuth` edge-case handling: when a token exists but `user` is `null` and `loading` is `false`, session is treated as invalid and user is redirected to `/admin/login?next=...`.
+
 ### 2026-02-23
 
 - Added lightweight i18n layer without external libraries.
