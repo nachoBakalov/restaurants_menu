@@ -460,6 +460,13 @@
 - Промени: Добавени са wrappers за backend endpoint-ите (`/admin/categories`, `/admin/items`), query cache ключове `['categories']` и `['items', categoryId]`, auto-select на първа категория, dialogs за create/edit, confirm modal за delete, availability toggle чрез PATCH, и RHF+zod валидация с decimal->cents трансформация за EUR/BGN цени и promo полета.
 - Validation: pnpm build (OK)
 - Next: По избор — добавяне на drag-and-drop reordering UI (sortOrder) и debounced inline edit за по-бърза оперативна работа.
+
+### [2026-02-24] Backend category delete fix (with existing items)
+- Задача: Премахване на 400 грешката при `DELETE /admin/categories/:id`, когато категорията има свързани items.
+- Файлове: backend/src/admin-menu/admin-menu.service.ts
+- Промени: `deleteCategory` вече не връща validation error за non-empty category; вместо това изпълнява transaction: `deleteMany(items by categoryId)` -> `delete(category)`.
+- Validation: npm run build (OK)
+- Next: По избор — soft-delete стратегия за items/categories, ако е нужен audit/history вместо hard delete.
 ```
 
 ## 11) Known limitations (кратко)

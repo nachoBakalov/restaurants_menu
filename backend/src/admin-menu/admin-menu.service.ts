@@ -83,16 +83,10 @@ export class AdminMenuService {
 
     assertOwnership(category.restaurantId, user);
 
-    const itemsCount = await this.prisma.item.count({ where: { categoryId: id } });
-    if (itemsCount > 0) {
-      throw new BadRequestException({
-        code: 'VALIDATION_ERROR',
-        message: 'Validation failed',
-        details: [{ field: 'categoryId', message: 'Cannot delete category with existing items' }],
-      });
-    }
-
-    await this.prisma.category.delete({ where: { id } });
+    await this.prisma.$transaction([
+      this.prisma.item.deleteMany({ where: { categoryId: id } }),
+      this.prisma.category.delete({ where: { id } }),
+    ]);
 
     return { success: true };
   }
