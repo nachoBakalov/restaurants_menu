@@ -155,12 +155,14 @@ describe('Contract happy-path (e2e)', () => {
 
     expect(publicRestaurant.body).toHaveProperty('id', restaurantId);
     expect(publicRestaurant.body).toHaveProperty('currency.bgnActiveNow');
+    expect(publicRestaurant.body).toHaveProperty('features.ORDERING', true);
 
     const menuRes = await request(app.getHttpServer())
       .get(`/public/restaurants/${slug}/menu`)
       .expect(200);
 
     expect(menuRes.body).toHaveProperty('generatedAt');
+    expect(menuRes.body).toHaveProperty('restaurant.features.ORDERING', true);
     expect(menuRes.body.categories[0].items[0].pricing.prices.EUR).toHaveProperty('currentCents');
 
     const createOrderRes = await request(app.getHttpServer())
@@ -237,6 +239,20 @@ describe('Contract happy-path (e2e)', () => {
 
     expect(response.body.error.code).toBe('FEATURE_DISABLED');
     expect(response.body.error.details.feature).toBe('ORDERING');
+
+    featureSpy.mockRestore();
+  });
+
+  it('returns public restaurant features.ORDERING=false when feature resolver reports disabled', async () => {
+    const featureSpy = jest
+      .spyOn(FeatureFlagService.prototype, 'isFeatureEnabled')
+      .mockResolvedValue(false);
+
+    const response = await request(app.getHttpServer())
+      .get(`/public/restaurants/${slug}`)
+      .expect(200);
+
+    expect(response.body).toHaveProperty('features.ORDERING', false);
 
     featureSpy.mockRestore();
   });

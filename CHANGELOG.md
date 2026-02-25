@@ -17,6 +17,7 @@ All notable changes to this repository are documented in this file.
 - SUPERADMIN restaurant management now supports branding fields (`logoUrl`, `coverImageUrl`) in create/list/update flows, including `PATCH /admin/restaurants/:id`.
 - Public restaurant responses now consistently expose branding fields in both `/public/restaurants/:slug` and `/public/restaurants/:slug/menu` restaurant block.
 - Frontend `/admin/restaurants` now supports branding UX for SUPERADMIN: logo thumbnail in list, edit dialog (`name/slug/logoUrl/coverImageUrl`) with live previews, and create flow with optional branding fields.
+- Public restaurant contract now includes `features.ORDERING` resolved via existing feature-flag service with safe fallback to `false` on resolver errors.
 
 ### Validation
 - `backend`: `npm run build` ✅

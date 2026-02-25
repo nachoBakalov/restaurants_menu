@@ -8,7 +8,11 @@ type RestaurantCurrencyContext = {
 
 type CategoryWithItems = Category & { items: Item[] };
 
-export function mapRestaurantPublic(restaurant: Restaurant, now: Date): RestaurantPublicResponseDto {
+export function mapRestaurantPublic(
+  restaurant: Restaurant,
+  now: Date,
+  features: { ORDERING: boolean } = { ORDERING: false },
+): RestaurantPublicResponseDto {
   const bgnActiveNow =
     restaurant.currencySecondaryEnabled &&
     (restaurant.bgnDisabledAt === null || now.getTime() < restaurant.bgnDisabledAt.getTime());
@@ -25,6 +29,7 @@ export function mapRestaurantPublic(restaurant: Restaurant, now: Date): Restaura
       bgnDisabledAt: restaurant.bgnDisabledAt ? restaurant.bgnDisabledAt.toISOString() : null,
       bgnActiveNow,
     },
+    features,
   };
 }
 
@@ -71,8 +76,9 @@ export function mapMenuResponse(
   restaurant: Restaurant,
   categories: CategoryWithItems[],
   now: Date,
+  features: { ORDERING: boolean } = { ORDERING: false },
 ): PublicMenuResponseDto {
-  const restaurantPublic = mapRestaurantPublic(restaurant, now);
+  const restaurantPublic = mapRestaurantPublic(restaurant, now, features);
 
   return {
     restaurant: restaurantPublic,

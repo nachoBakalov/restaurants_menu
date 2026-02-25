@@ -5,6 +5,10 @@ export class RestaurantCurrencyDto {
   bgnActiveNow!: boolean;
 }
 
+export class RestaurantPublicFeaturesDto {
+  ORDERING!: boolean;
+}
+
 export class RestaurantPublicResponseDto {
   id!: string;
   name!: string;
@@ -12,4 +16,5 @@ export class RestaurantPublicResponseDto {
   logoUrl!: string | null;
   coverImageUrl!: string | null;
   currency!: RestaurantCurrencyDto;
+  features!: RestaurantPublicFeaturesDto;
 }

@@ -242,4 +242,5 @@ curl -X DELETE http://localhost:3000/admin/items/<ITEM_ID> \
 - Added `PATCH /admin/restaurants/:id` (SUPERADMIN) for partial restaurant updates including branding fields (`logoUrl`, `coverImageUrl`).
 - Enabled `GET /admin/billing/features?restaurantId=<id>` for SUPERADMIN impersonation while keeping OWNER/STAFF scoped behavior.
 - Documented SUPERADMIN scoped usage for admin endpoints via `restaurantId` query (`/admin/categories`, `/admin/orders`) used by frontend impersonation flow.
+- Added public restaurant feature flags in response (`features.ORDERING`) for both `/public/restaurants/:slug` and `/public/restaurants/:slug/menu` restaurant block, backed by existing feature-flag resolver with safe fallback.
 - Validation snapshot: `npm run build` (OK), `npm run test:e2e` (11/11 passing).
