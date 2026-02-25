@@ -5,7 +5,7 @@ import { z } from 'zod';
 import type { CreateCategoryDto, UpdateCategoryDto } from '../menu.types';
 import { useT } from '../../../i18n/useT';
 import { Button } from '../../../shared/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../../shared/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../../shared/ui/dialog';
 import { Input } from '../../../shared/ui/input';
 import { Label } from '../../../shared/ui/label';
 
@@ -83,6 +83,9 @@ export function CategoryDialog({ open, onOpenChange, mode, isSubmitting, initial
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{mode === 'create' ? t('admin.menu.newCategory') : t('admin.menu.editCategory')}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {mode === 'create' ? 'Създаване на категория за менюто.' : 'Редакция на съществуваща категория.'}
+          </DialogDescription>
         </DialogHeader>
 
         <form className="space-y-4" onSubmit={submit}>

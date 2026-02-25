@@ -6,7 +6,7 @@ import type { CreateItemDto, Item, UpdateItemDto } from '../menu.types';
 import { useT } from '../../../i18n/useT';
 import { ApiErrorAlert } from '../../../shared/components/ApiErrorAlert';
 import { Button } from '../../../shared/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../../shared/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../../shared/ui/dialog';
 import { Input } from '../../../shared/ui/input';
 import { Label } from '../../../shared/ui/label';
 
@@ -301,6 +301,9 @@ export function ItemDialog({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{mode === 'create' ? t('admin.menu.newItem') : t('admin.menu.editItem')}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {mode === 'create' ? 'Създаване на артикул в избраната категория.' : 'Редакция на съществуващ артикул.'}
+          </DialogDescription>
         </DialogHeader>
 
         <ApiErrorAlert error={error} />
