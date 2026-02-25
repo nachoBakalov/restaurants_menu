@@ -80,6 +80,7 @@ export function mapMenuResponse(
     categories: categories.map((category) => ({
       id: category.id,
       name: category.name,
+      imageUrl: category.imageUrl,
       sortOrder: category.sortOrder,
       items: category.items.map((item) => ({
         id: item.id,

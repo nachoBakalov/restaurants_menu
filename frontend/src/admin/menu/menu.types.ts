@@ -1,6 +1,7 @@
 export type Category = {
   id: string;
   name: string;
+  imageUrl?: string | null;
   sortOrder: number;
 };
 
@@ -24,11 +25,13 @@ export type Item = {
 
 export type CreateCategoryDto = {
   name: string;
+  imageUrl?: string | null;
   sortOrder?: number;
 };
 
 export type UpdateCategoryDto = {
   name?: string;
+  imageUrl?: string | null;
   sortOrder?: number;
 };
 

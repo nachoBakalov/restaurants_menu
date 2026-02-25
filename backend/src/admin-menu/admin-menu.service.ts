@@ -53,6 +53,7 @@ export class AdminMenuService {
       data: {
         restaurantId: resolvedRestaurantId,
         name: dto.name,
+        imageUrl: dto.imageUrl ?? null,
         sortOrder: dto.sortOrder ?? 0,
       },
     });
@@ -70,6 +71,7 @@ export class AdminMenuService {
       where: { id },
       data: {
         ...(dto.name !== undefined ? { name: dto.name } : {}),
+        ...(dto.imageUrl !== undefined ? { imageUrl: dto.imageUrl } : {}),
         ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
       },
     });

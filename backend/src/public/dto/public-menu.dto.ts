@@ -18,6 +18,7 @@ export class PublicMenuItemDto {
 export class PublicMenuCategoryDto {
   id!: string;
   name!: string;
+  imageUrl!: string | null;
   sortOrder!: number;
   items!: PublicMenuItemDto[];
 }

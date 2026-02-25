@@ -267,6 +267,7 @@ export function MenuPage() {
           editingCategory
             ? {
                 name: editingCategory.name,
+                imageUrl: editingCategory.imageUrl ?? '',
                 sortOrder: editingCategory.sortOrder,
               }
             : undefined

@@ -55,11 +55,11 @@ export class CreateItemDto {
 
   @IsOptional()
   @IsString()
-  imageUrl?: string;
+  imageUrl?: string | null;
 
   @IsOptional()
   @IsString()
-  allergens?: string;
+  allergens?: string | null;
 
   @IsOptional()
   @IsBoolean()

@@ -28,6 +28,7 @@ export class PublicMenuItemResponseDto {
 export class PublicMenuCategoryResponseDto {
   id!: string;
   name!: string;
+  imageUrl!: string | null;
   sortOrder!: number;
   items!: PublicMenuItemResponseDto[];
 }

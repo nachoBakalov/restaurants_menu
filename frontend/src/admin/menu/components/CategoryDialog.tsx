@@ -16,6 +16,7 @@ type CategoryDialogProps = {
   isSubmitting: boolean;
   initialValues?: {
     name: string;
+    imageUrl: string;
     sortOrder: number;
   };
   onSubmit: (dto: CreateCategoryDto | UpdateCategoryDto) => Promise<void>;
@@ -23,6 +24,7 @@ type CategoryDialogProps = {
 
 type CategoryFormValues = {
   name: string;
+  imageUrl: string;
   sortOrder: number;
 };
 
@@ -33,6 +35,7 @@ export function CategoryDialog({ open, onOpenChange, mode, isSubmitting, initial
     () =>
       z.object({
         name: z.string().trim().min(2, t('auth.validation.required')),
+        imageUrl: z.string(),
         sortOrder: z.number().min(0, t('auth.validation.required')),
       }),
     [t],
@@ -42,27 +45,33 @@ export function CategoryDialog({ open, onOpenChange, mode, isSubmitting, initial
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: initialValues?.name ?? '',
+      imageUrl: initialValues?.imageUrl ?? '',
       sortOrder: initialValues?.sortOrder ?? 0,
     },
   });
+
+  const imagePreview = watch('imageUrl').trim();
 
   useEffect(() => {
     if (open) {
       reset({
         name: initialValues?.name ?? '',
+        imageUrl: initialValues?.imageUrl ?? '',
         sortOrder: initialValues?.sortOrder ?? 0,
       });
     }
-  }, [initialValues?.name, initialValues?.sortOrder, open, reset]);
+  }, [initialValues?.imageUrl, initialValues?.name, initialValues?.sortOrder, open, reset]);
 
   const submit = handleSubmit(async (values) => {
     const payload = {
       name: values.name.trim(),
+      imageUrl: values.imageUrl.trim() || null,
       sortOrder: values.sortOrder,
     };
 
@@ -87,6 +96,14 @@ export function CategoryDialog({ open, onOpenChange, mode, isSubmitting, initial
             <Label htmlFor="category-sort">{t('admin.menu.fields.sortOrder')}</Label>
             <Input id="category-sort" type="number" min={0} {...register('sortOrder', { valueAsNumber: true })} disabled={isSubmitting} />
             {errors.sortOrder ? <p className="text-xs text-destructive">{errors.sortOrder.message}</p> : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="category-image">{t('admin.menu.fields.imageUrl')}</Label>
+            <Input id="category-image" placeholder="https://..." {...register('imageUrl')} disabled={isSubmitting} />
+            {imagePreview ? (
+              <img src={imagePreview} alt={watch('name') || 'category preview'} className="h-16 w-16 rounded-md border object-cover" />
+            ) : null}
           </div>
 
           <DialogFooter>
