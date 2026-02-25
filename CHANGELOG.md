@@ -21,6 +21,8 @@ All notable changes to this repository are documented in this file.
 - Added public customer-facing route `/:slug` with a luxe menu UI, category navigation, item detail dialog, and localized empty/error/loading states.
 - Added frontend public ordering flow gated by `restaurant.features.ORDERING`: cart, checkout dialog (TABLE/DELIVERY), and success state after order submission.
 - Added frontend public module scaffolding (`public/api`, `public/cart`, `public/theme`) to keep customer menu, API contracts, and theming isolated from admin flows.
+- Public menu item cards now show optional allergens with subtle truncated text (`Алергени: ...`) when present.
+- Public cart UX now supports item removal controls on both desktop and mobile; mobile remove now decrements quantity by 1 and auto-removes at zero.
 
 ### Validation
 - `backend`: `npm run build` ✅

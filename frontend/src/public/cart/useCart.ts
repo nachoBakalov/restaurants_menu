@@ -54,11 +54,11 @@ export function useCart() {
     );
   };
 
-  const remove = (itemId: string) => {
+  const removeItem = (itemId: string) => {
     setItems((current) => current.filter((entry) => entry.itemId !== itemId));
   };
 
-  const clear = () => setItems([]);
+  const clearCart = () => setItems([]);
 
   const totals = useMemo<CartTotals>(() => {
     const eurTotalCents = items.reduce((sum, entry) => sum + entry.unitPrice.eurCents * entry.qty, 0);
@@ -84,8 +84,10 @@ export function useCart() {
     addItem,
     increment,
     decrement,
-    remove,
-    clear,
+    removeItem,
+    clearCart,
+    remove: removeItem,
+    clear: clearCart,
     totals,
     itemsCount,
   };

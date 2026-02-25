@@ -11,7 +11,7 @@ export type PublicTheme = {
 const standardTheme: PublicTheme = {
   key: 'standard',
   pageClassName: 'bg-background text-foreground',
-  heroClassName: 'rounded-2xl border bg-card shadow-sm',
+  heroClassName: 'rounded-2xl border bg-card shadow-sm p-12',
   cardClassName: 'rounded-xl border bg-card/90 shadow-sm',
   spacingClassName: 'space-y-6',
 };

@@ -53,6 +53,20 @@ function PriceBlock({
   );
 }
 
+function formatAllergens(allergens: string | string[] | null | undefined): string | null {
+  if (Array.isArray(allergens)) {
+    const values = allergens.map((entry) => entry.trim()).filter(Boolean);
+    return values.length > 0 ? values.join(', ') : null;
+  }
+
+  if (typeof allergens === 'string') {
+    const value = allergens.trim();
+    return value.length > 0 ? value : null;
+  }
+
+  return null;
+}
+
 function PublicMenuContent() {
   const { slug } = useParams();
   const { t } = useT();
@@ -62,6 +76,7 @@ function PublicMenuContent() {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<PublicMenuItem | null>(null);
   const [itemQty, setItemQty] = useState(1);
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [checkoutType, setCheckoutType] = useState<CheckoutType>('TABLE');
   const [tableCode, setTableCode] = useState('');
@@ -87,7 +102,7 @@ function PublicMenuContent() {
   const createOrderMutation = useMutation({
     mutationFn: (payload: CreatePublicOrderPayload) => createPublicOrder(slug ?? '', payload),
     onSuccess: (data) => {
-      cart.clear();
+      cart.clearCart();
       setCheckoutError(null);
       setSuccessOrder({ orderId: data.orderId, status: data.status });
     },
@@ -103,6 +118,18 @@ function PublicMenuContent() {
       setActiveCategoryId(categories[0].id);
     }
   }, [categories, activeCategoryId]);
+
+  useEffect(() => {
+    if (cart.items.length === 0 && isCheckoutOpen) {
+      setIsCheckoutOpen(false);
+    }
+  }, [cart.items.length, isCheckoutOpen]);
+
+  useEffect(() => {
+    if (cart.items.length === 0 && isMobileCartOpen) {
+      setIsMobileCartOpen(false);
+    }
+  }, [cart.items.length, isMobileCartOpen]);
 
   const heroStyle = useMemo(
     () => ({
@@ -131,13 +158,13 @@ function PublicMenuContent() {
 
   return (
     <main className={`min-h-screen ${theme.pageClassName}`}>
-      <div className="mx-auto w-full max-w-7xl px-4 py-4 md:px-6 md:py-6">
+      <div className="mx-auto w-full max-w-7xl px-4 py-4 md:px-6 md:py-6 ">
         <section
           className={`${theme.heroClassName} overflow-hidden transition-all duration-300`}
           style={heroStyle}
         >
           <div className={`p-5 md:p-8 ${restaurant.coverImageUrl ? 'text-white' : ''}`}>
-            <div className="flex items-end gap-4">
+            <div className="flex items-center gap-4 ">
               {restaurant.logoUrl ? (
                 <img
                   src={restaurant.logoUrl}
@@ -150,7 +177,7 @@ function PublicMenuContent() {
               )}
               <div>
                 <h1 className="text-2xl font-semibold md:text-3xl">{restaurant.name}</h1>
-                <p className={`text-sm ${restaurant.coverImageUrl ? 'text-white/90' : 'text-muted-foreground'}`}>/{restaurant.slug}</p>
+                {/* <p className={`text-sm ${restaurant.coverImageUrl ? 'text-white/90' : 'text-muted-foreground'}`}>/{restaurant.slug}</p> */}
               </div>
             </div>
           </div>
@@ -187,6 +214,11 @@ function PublicMenuContent() {
                 {category.items.map((item) => (
                   <Card key={item.id} className={`${theme.cardClassName} transition-transform duration-200 hover:-translate-y-0.5`}>
                     <CardContent className="space-y-3 p-4">
+                      {(() => {
+                        const allergensText = formatAllergens(item.allergens as string | string[] | null | undefined);
+
+                        return (
+                          <>
                       {item.imageUrl ? (
                         <img
                           src={item.imageUrl}
@@ -199,6 +231,11 @@ function PublicMenuContent() {
                       <div className="space-y-1">
                         <h3 className="text-base font-semibold">{item.name}</h3>
                         {item.description ? <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p> : null}
+                        {allergensText ? (
+                          <p className="line-clamp-2 text-xs text-muted-foreground">
+                            {t('public.menu.allergensLabel')}: {allergensText}
+                          </p>
+                        ) : null}
                       </div>
 
                       <PriceBlock item={item} showBgn={showBgn} />
@@ -229,6 +266,9 @@ function PublicMenuContent() {
                           </Button>
                         ) : null}
                       </div>
+                          </>
+                        );
+                      })()}
                     </CardContent>
                   </Card>
                 ))}
@@ -238,12 +278,14 @@ function PublicMenuContent() {
         </div>
       </div>
 
-      {orderingEnabled ? (
+      {orderingEnabled && cart.items.length > 0 ? (
         <>
           <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 p-3 backdrop-blur md:hidden">
             <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium">{t('public.menu.cart')}</p>
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsMobileCartOpen(true)}>
+                  {t('public.menu.cart')}
+                </Button>
                 <p className="text-xs text-muted-foreground">
                   {cart.itemsCount} · {formatMoney(cart.totals.eurTotalCents, 'EUR')}
                   {showBgn && cart.totals.bgnTotalCents !== null ? ` / ${formatMoney(cart.totals.bgnTotalCents, 'BGN')}` : ''}
@@ -264,10 +306,29 @@ function PublicMenuContent() {
               {cart.items.map((entry) => (
                 <div key={entry.itemId} className="rounded border p-2 text-sm">
                   <p className="font-medium">{entry.name}</p>
-                  <p className="text-xs text-muted-foreground">x{entry.qty}</p>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1">
+                      <Button type="button" variant="outline" size="sm" onClick={() => cart.decrement(entry.itemId)}>
+                        -
+                      </Button>
+                      <span className="w-6 text-center text-xs text-muted-foreground">{entry.qty}</span>
+                      <Button type="button" variant="outline" size="sm" onClick={() => cart.increment(entry.itemId)}>
+                        +
+                      </Button>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-auto px-1 py-0 text-xs"
+                      onClick={() => cart.removeItem(entry.itemId)}
+                    >
+                      {t('public.cart.remove')}
+                    </Button>
+                  </div>
                 </div>
               ))}
-              {cart.items.length === 0 ? <p className="text-sm text-muted-foreground">{t('public.common.loading')}</p> : null}
+              {cart.items.length === 0 ? <p className="text-sm text-muted-foreground">{t('public.cart.empty')}</p> : null}
             </div>
             <div className="mt-3 border-t pt-3">
               <p className="text-sm font-medium">{formatMoney(cart.totals.eurTotalCents, 'EUR')}</p>
@@ -281,6 +342,53 @@ function PublicMenuContent() {
           </aside>
         </>
       ) : null}
+
+      <Dialog
+        open={isMobileCartOpen}
+        onOpenChange={(nextOpen) => {
+          setIsMobileCartOpen(nextOpen);
+        }}
+      >
+        <DialogContent className="md:hidden">
+          <DialogHeader>
+            <DialogTitle>{t('public.menu.cart')}</DialogTitle>
+            <DialogDescription>
+              {cart.itemsCount} · {formatMoney(cart.totals.eurTotalCents, 'EUR')}
+              {showBgn && cart.totals.bgnTotalCents !== null ? ` / ${formatMoney(cart.totals.bgnTotalCents, 'BGN')}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="max-h-72 space-y-2 overflow-auto">
+            {cart.items.map((entry) => (
+              <div key={entry.itemId} className="rounded border p-2 text-sm">
+                <p className="font-medium">{entry.name}</p>
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <span className="text-xs text-muted-foreground">x{entry.qty}</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-auto px-1 py-0 text-xs"
+                    onClick={() => cart.decrement(entry.itemId)}
+                  >
+                    {t('public.cart.remove')}
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {cart.items.length === 0 ? <p className="text-sm text-muted-foreground">{t('public.cart.empty')}</p> : null}
+          </div>
+
+          <DialogFooter>
+            <Button type="button" disabled={cart.items.length === 0} onClick={() => {
+              setIsMobileCartOpen(false);
+              setIsCheckoutOpen(true);
+            }}>
+              {t('public.menu.order')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={Boolean(selectedItem)}
@@ -303,7 +411,11 @@ function PublicMenuContent() {
                 <img src={selectedItem.imageUrl} alt={selectedItem.name} loading="lazy" className="h-48 w-full rounded-md object-cover" />
               ) : null}
 
-              {selectedItem.allergens ? <p className="text-sm text-muted-foreground">{selectedItem.allergens}</p> : null}
+              {formatAllergens(selectedItem.allergens as string | string[] | null | undefined) ? (
+                <p className="text-sm text-muted-foreground">
+                  {t('public.menu.allergensLabel')}: {formatAllergens(selectedItem.allergens as string | string[] | null | undefined)}
+                </p>
+              ) : null}
 
               <PriceBlock item={selectedItem} showBgn={showBgn} />
 

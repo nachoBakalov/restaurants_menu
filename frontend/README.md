@@ -27,6 +27,8 @@ This template provides a minimal setup to get React working in Vite with HMR and
 - Added public API layer (`public.api.ts`, `public.types.ts`) for restaurant/menu/order contract handling in the customer flow.
 - Added ORDERING-gated customer cart + checkout flow (TABLE/DELIVERY) with localized submit/success/error states.
 - Added public module scaffolding for theme and cart state (`public/theme`, `public/cart`) to keep customer experience isolated from admin code.
+- Added allergens rendering in public item cards with localized label and subtle truncated text.
+- Added cart item removal controls in public cart UI; mobile remove now decrements quantity step-by-step and auto-removes item at zero.
 
 ### 2026-02-24
 
