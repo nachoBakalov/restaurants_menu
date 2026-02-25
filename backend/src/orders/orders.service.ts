@@ -6,6 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RestaurantResolverService } from '../restaurants/restaurant-resolver.service';
 import { AdminOrdersQueryDto, UpdateOrderStatusDto } from './dto/admin-orders.dto';
 import { CreatePublicOrderDto } from './dto/create-public-order.dto';
+import { computeOrderingAvailability } from './ordering-availability.util';
 
 type AuthUser = {
   id: string;
@@ -31,6 +32,27 @@ export class OrdersService {
         code: 'FEATURE_DISABLED',
         message: 'Feature ORDERING is disabled',
         details: { feature: 'ORDERING' },
+      });
+    }
+
+    if (!restaurant.orderingVisible) {
+      throw new ForbiddenException({
+        code: 'ORDERING_HIDDEN',
+        message: 'Ordering is currently hidden for this restaurant',
+        details: { orderingVisible: false },
+      });
+    }
+
+    const orderingTimezone = restaurant.orderingTimezone || 'Europe/Sofia';
+    const availability = computeOrderingAvailability(new Date(), orderingTimezone, restaurant.orderingSchedule);
+    if (!availability.availableNow) {
+      throw new ForbiddenException({
+        code: 'ORDERING_CLOSED',
+        message: 'Ordering is currently closed',
+        details: {
+          nextOpenAt: availability.nextOpenAt,
+          timezone: orderingTimezone,
+        },
       });
     }
 

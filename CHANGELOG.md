@@ -25,6 +25,10 @@ All notable changes to this repository are documented in this file.
 - Public cart UX now supports item removal controls on both desktop and mobile; mobile remove now decrements quantity by 1 and auto-removes at zero.
 - Public menu UX polish: search input with cross-category results, smooth category scroll tabs, skeleton loading state, and safe image fallbacks for cover/item images.
 - Public checkout now supports `TAKEAWAY` type with conditional field validation (no `tableCode`/`deliveryAddress` required) and updated frontend/backend order contracts.
+- Backend now supports per-restaurant ordering visibility and schedule (`orderingVisible`, `orderingTimezone`, `orderingSchedule`) with timezone-aware availability computation.
+- Added admin restaurant settings endpoints (`GET/PATCH /admin/restaurant/settings`) for managing ordering visibility/timezone/schedule with OWNER/STAFF and SUPERADMIN scoped access.
+- Public restaurant responses now include computed ordering availability block (`visible`, `availableNow`, `timezone`, `schedule`, `nextOpenAt`).
+- Public order creation now enforces ordering runtime rules and returns `ORDERING_HIDDEN` / `ORDERING_CLOSED` (with `nextOpenAt`) when ordering is not currently allowed.
 
 ### Validation
 - `backend`: `npm run build` ✅

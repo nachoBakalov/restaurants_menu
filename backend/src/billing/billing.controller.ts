@@ -9,6 +9,7 @@ import { BillingService } from './billing.service';
 import { CreateRestaurantWithOwnerDto } from './dto/create-restaurant-with-owner.dto';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { ResetOwnerPasswordDto } from './dto/reset-owner-password.dto';
+import { UpdateRestaurantSettingsDto } from './dto/restaurant-settings.dto';
 import { SetFeatureOverrideDto } from './dto/set-feature-override.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
 
@@ -76,5 +77,23 @@ export class BillingController {
   @Roles(UserRole.OWNER, UserRole.STAFF, UserRole.SUPERADMIN)
   getResolvedFeatures(@Req() req: AuthenticatedRequest, @Query('restaurantId') restaurantId?: string) {
     return this.billingService.getResolvedFeatures(req.user, restaurantId);
+  }
+
+  @Get('restaurant/settings')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.STAFF, UserRole.SUPERADMIN)
+  getRestaurantSettings(@Req() req: AuthenticatedRequest, @Query('restaurantId') restaurantId?: string) {
+    return this.billingService.getRestaurantSettings(req.user, restaurantId);
+  }
+
+  @Patch('restaurant/settings')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.STAFF, UserRole.SUPERADMIN)
+  updateRestaurantSettings(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: UpdateRestaurantSettingsDto,
+    @Query('restaurantId') restaurantId?: string,
+  ) {
+    return this.billingService.updateRestaurantSettings(req.user, dto, restaurantId);
   }
 }

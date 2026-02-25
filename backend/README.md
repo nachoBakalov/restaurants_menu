@@ -156,6 +156,48 @@ curl -X GET http://localhost:3000/admin/billing/features \
   -H "Authorization: Bearer <OWNER_ACCESS_TOKEN>"
 ```
 
+### Admin restaurant settings (OWNER/STAFF)
+
+```bash
+curl -X GET http://localhost:3000/admin/restaurant/settings \
+  -H "Authorization: Bearer <OWNER_ACCESS_TOKEN>"
+```
+
+```bash
+curl -X PATCH http://localhost:3000/admin/restaurant/settings \
+  -H "Authorization: Bearer <OWNER_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "orderingVisible": true,
+    "orderingTimezone": "Europe/Sofia",
+    "orderingSchedule": {
+      "days": {
+        "mon": { "enabled": true, "start": "09:00", "end": "20:00" },
+        "tue": { "enabled": true, "start": "09:00", "end": "20:00" },
+        "wed": { "enabled": true, "start": "09:00", "end": "20:00" },
+        "thu": { "enabled": true, "start": "09:00", "end": "20:00" },
+        "fri": { "enabled": true, "start": "09:00", "end": "22:00" },
+        "sat": { "enabled": true, "start": "10:00", "end": "22:00" },
+        "sun": { "enabled": false, "start": null, "end": null }
+      }
+    }
+  }'
+```
+
+### Admin restaurant settings (SUPERADMIN impersonation)
+
+```bash
+curl -X GET "http://localhost:3000/admin/restaurant/settings?restaurantId=<RESTAURANT_ID>" \
+  -H "Authorization: Bearer <SUPERADMIN_ACCESS_TOKEN>"
+```
+
+```bash
+curl -X PATCH "http://localhost:3000/admin/restaurant/settings?restaurantId=<RESTAURANT_ID>" \
+  -H "Authorization: Bearer <SUPERADMIN_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{ "orderingVisible": false }'
+```
+
 ### Billing (SUPERADMIN impersonation)
 
 ```bash

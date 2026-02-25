@@ -6,9 +6,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateRestaurantWithOwnerDto } from './dto/create-restaurant-with-owner.dto';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { ResetOwnerPasswordDto } from './dto/reset-owner-password.dto';
+import { UpdateRestaurantSettingsDto } from './dto/restaurant-settings.dto';
 import { SetFeatureOverrideDto } from './dto/set-feature-override.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
 import { FeatureFlagService } from './feature-flag.service';
+import { isValidOrderingSchedule } from '../orders/ordering-availability.util';
 
 @Injectable()
 export class BillingService {
@@ -287,7 +289,7 @@ export class BillingService {
   }
 
   async getResolvedFeatures(user: AuthUser, requestedRestaurantId?: string) {
-    const restaurantId = this.resolveFeaturesRestaurantId(user, requestedRestaurantId);
+    const restaurantId = this.resolveScopedRestaurantId(user, requestedRestaurantId);
 
     const features = await this.prisma.feature.findMany({
       orderBy: { key: 'asc' },
@@ -302,6 +304,72 @@ export class BillingService {
     );
 
     return { items: resolved };
+  }
+
+  async getRestaurantSettings(user: AuthUser, requestedRestaurantId?: string) {
+    const restaurantId = this.resolveScopedRestaurantId(user, requestedRestaurantId);
+
+    const restaurant = await this.prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      select: {
+        orderingVisible: true,
+        orderingTimezone: true,
+        orderingSchedule: true,
+      },
+    });
+
+    if (!restaurant) {
+      throw new NotFoundException('Restaurant not found');
+    }
+
+    return {
+      orderingVisible: restaurant.orderingVisible,
+      orderingTimezone: restaurant.orderingTimezone,
+      orderingSchedule: (restaurant.orderingSchedule as Record<string, unknown> | null) ?? null,
+    };
+  }
+
+  async updateRestaurantSettings(
+    user: AuthUser,
+    dto: UpdateRestaurantSettingsDto,
+    requestedRestaurantId?: string,
+  ) {
+    const restaurantId = this.resolveScopedRestaurantId(user, requestedRestaurantId);
+
+    if (dto.orderingSchedule !== undefined && dto.orderingSchedule !== null && !isValidOrderingSchedule(dto.orderingSchedule)) {
+      throw new BadRequestException({
+        code: 'VALIDATION_ERROR',
+        message: 'Validation failed',
+        details: [{ field: 'orderingSchedule', message: 'Invalid ordering schedule shape' }],
+      });
+    }
+
+    const updated = await this.prisma.restaurant.update({
+      where: { id: restaurantId },
+      data: {
+        ...(dto.orderingVisible !== undefined ? { orderingVisible: dto.orderingVisible } : {}),
+        ...(dto.orderingTimezone !== undefined ? { orderingTimezone: dto.orderingTimezone } : {}),
+        ...(dto.orderingSchedule !== undefined
+          ? {
+              orderingSchedule:
+                dto.orderingSchedule === null
+                  ? Prisma.JsonNull
+                  : (dto.orderingSchedule as Prisma.InputJsonValue),
+            }
+          : {}),
+      },
+      select: {
+        orderingVisible: true,
+        orderingTimezone: true,
+        orderingSchedule: true,
+      },
+    });
+
+    return {
+      orderingVisible: updated.orderingVisible,
+      orderingTimezone: updated.orderingTimezone,
+      orderingSchedule: (updated.orderingSchedule as Record<string, unknown> | null) ?? null,
+    };
   }
 
   async resetOwnerPassword(ownerId: string, dto: ResetOwnerPasswordDto) {
@@ -335,7 +403,7 @@ export class BillingService {
     };
   }
 
-  private resolveFeaturesRestaurantId(user: AuthUser, requestedRestaurantId?: string): string {
+  private resolveScopedRestaurantId(user: AuthUser, requestedRestaurantId?: string): string {
     if (user.role === UserRole.SUPERADMIN) {
       if (!requestedRestaurantId) {
         throw new BadRequestException({

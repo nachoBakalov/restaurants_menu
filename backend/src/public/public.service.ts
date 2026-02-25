@@ -3,6 +3,7 @@ import { FeatureFlagService } from '../billing/feature-flag.service';
 import { mapMenuResponse, mapRestaurantPublic } from '../common/mappers/api-contract.mappers';
 import { OrdersService } from '../orders/orders.service';
 import { CreatePublicOrderDto } from '../orders/dto/create-public-order.dto';
+import { computeOrderingAvailability } from '../orders/ordering-availability.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { RestaurantResolverService } from '../restaurants/restaurant-resolver.service';
 import { PublicMenuResponseDto } from './dto/menu.response.dto';
@@ -23,14 +24,16 @@ export class PublicService {
     const restaurant = await this.restaurantResolverService.getRestaurantBySlug(slug);
     const now = new Date();
     const features = await this.resolvePublicFeatures(restaurant.id);
+    const ordering = this.resolvePublicOrdering(restaurant, now);
 
-    return mapRestaurantPublic(restaurant, now, features);
+    return mapRestaurantPublic(restaurant, now, features, ordering);
   }
 
   async getRestaurantMenu(slug: string): Promise<PublicMenuResponseDto> {
     const restaurant = await this.restaurantResolverService.getRestaurantBySlug(slug);
     const now = new Date();
     const features = await this.resolvePublicFeatures(restaurant.id);
+    const ordering = this.resolvePublicOrdering(restaurant, now);
 
     const categories = await this.prisma.category.findMany({
       where: { restaurantId: restaurant.id },
@@ -42,7 +45,7 @@ export class PublicService {
       },
     });
 
-    return mapMenuResponse(restaurant, categories, now, features);
+    return mapMenuResponse(restaurant, categories, now, features, ordering);
   }
 
   async createOrder(slug: string, dto: CreatePublicOrderDto) {
@@ -57,5 +60,25 @@ export class PublicService {
       this.logger.error(`Failed to resolve public features for restaurant ${restaurantId}`, error as Error);
       return { ORDERING: false };
     }
+  }
+
+  private resolvePublicOrdering(
+    restaurant: {
+      orderingVisible: boolean;
+      orderingTimezone: string;
+      orderingSchedule: unknown;
+    },
+    now: Date,
+  ) {
+    const timezone = restaurant.orderingTimezone || 'Europe/Sofia';
+    const availability = computeOrderingAvailability(now, timezone, restaurant.orderingSchedule);
+
+    return {
+      visible: restaurant.orderingVisible,
+      availableNow: availability.availableNow,
+      timezone,
+      schedule: (restaurant.orderingSchedule as Record<string, unknown> | null) ?? null,
+      nextOpenAt: availability.nextOpenAt,
+    };
   }
 }

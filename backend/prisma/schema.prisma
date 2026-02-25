@@ -72,6 +72,9 @@ model Restaurant {
   slug                     String                      @unique
   logoUrl                  String?
   coverImageUrl            String?
+  orderingVisible          Boolean                     @default(true)
+  orderingTimezone         String                      @default("Europe/Sofia")
+  orderingSchedule         Json?
   currencyPrimary          Currency                    @default(EUR)
   currencySecondaryEnabled Boolean                     @default(false)
   bgnDisabledAt            DateTime?

@@ -12,6 +12,19 @@ export function mapRestaurantPublic(
   restaurant: Restaurant,
   now: Date,
   features: { ORDERING: boolean } = { ORDERING: false },
+  ordering: {
+    visible: boolean;
+    availableNow: boolean;
+    timezone: string;
+    schedule: Record<string, unknown> | null;
+    nextOpenAt: string | null;
+  } = {
+    visible: true,
+    availableNow: true,
+    timezone: 'Europe/Sofia',
+    schedule: null,
+    nextOpenAt: null,
+  },
 ): RestaurantPublicResponseDto {
   const bgnActiveNow =
     restaurant.currencySecondaryEnabled &&
@@ -30,6 +43,7 @@ export function mapRestaurantPublic(
       bgnActiveNow,
     },
     features,
+    ordering,
   };
 }
 
@@ -77,8 +91,21 @@ export function mapMenuResponse(
   categories: CategoryWithItems[],
   now: Date,
   features: { ORDERING: boolean } = { ORDERING: false },
+  ordering: {
+    visible: boolean;
+    availableNow: boolean;
+    timezone: string;
+    schedule: Record<string, unknown> | null;
+    nextOpenAt: string | null;
+  } = {
+    visible: true,
+    availableNow: true,
+    timezone: 'Europe/Sofia',
+    schedule: null,
+    nextOpenAt: null,
+  },
 ): PublicMenuResponseDto {
-  const restaurantPublic = mapRestaurantPublic(restaurant, now, features);
+  const restaurantPublic = mapRestaurantPublic(restaurant, now, features, ordering);
 
   return {
     restaurant: restaurantPublic,
