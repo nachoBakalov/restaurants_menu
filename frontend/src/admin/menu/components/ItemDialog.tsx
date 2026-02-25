@@ -31,6 +31,7 @@ type ItemFormValues = {
   isAvailable: boolean;
   priceEur: string;
   promoEur: string;
+  promoStartsAt: string;
   promoEndsAt: string;
 };
 
@@ -116,6 +117,7 @@ export function ItemDialog({
             const cents = toCents(value);
             return cents !== null && cents > 0;
           }, t('auth.validation.required')),
+        promoStartsAt: z.string(),
         promoEndsAt: z.string(),
       }),
     [t],
@@ -138,6 +140,7 @@ export function ItemDialog({
       isAvailable: item?.isAvailable ?? true,
       priceEur: centsToDecimal(item?.prices?.priceEurCents),
       promoEur: centsToDecimal(item?.promo?.promoPriceEurCents),
+      promoStartsAt: toDateInputValue(item?.promo?.promoStartsAt),
       promoEndsAt: toDateInputValue(item?.promo?.promoEndsAt),
     },
   });
@@ -164,6 +167,7 @@ export function ItemDialog({
       isAvailable: item?.isAvailable ?? true,
       priceEur: centsToDecimal(item?.prices?.priceEurCents),
       promoEur: centsToDecimal(item?.promo?.promoPriceEurCents),
+      promoStartsAt: toDateInputValue(item?.promo?.promoStartsAt),
       promoEndsAt: toDateInputValue(item?.promo?.promoEndsAt),
     });
   }, [item, open, reset]);
@@ -173,6 +177,7 @@ export function ItemDialog({
     const priceBgnCents = eurCentsToBgnCents(priceEurCents);
     const promoPriceEurCents = toCents(values.promoEur);
     const promoPriceBgnCents = eurCentsToBgnCents(promoPriceEurCents);
+    const promoStartsAt = values.promoStartsAt.trim();
     const promoEndsAt = values.promoEndsAt.trim();
     const normalizedAllergens = values.allergens.trim();
     const normalizedImageUrl = values.imageUrl.trim() || null;
@@ -194,11 +199,12 @@ export function ItemDialog({
           priceEurCents,
           ...(priceBgnCents !== null ? { priceBgnCents } : {}),
         },
-        ...(promoPriceEurCents !== null || promoPriceBgnCents !== null || Boolean(promoEndsAt)
+        ...(promoPriceEurCents !== null || promoPriceBgnCents !== null || Boolean(promoStartsAt) || Boolean(promoEndsAt)
           ? {
               promo: {
                 ...(promoPriceEurCents !== null ? { promoPriceEurCents } : {}),
                 ...(promoPriceBgnCents !== null ? { promoPriceBgnCents } : {}),
+                ...(promoStartsAt ? { promoStartsAt } : {}),
                 ...(promoEndsAt ? { promoEndsAt } : {}),
               },
             }
@@ -253,6 +259,7 @@ export function ItemDialog({
 
     const initialPromoEur = item.promo?.promoPriceEurCents ?? null;
     const initialPromoBgn = item.promo?.promoPriceBgnCents ?? null;
+    const initialPromoStartsAt = toDateInputValue(item.promo?.promoStartsAt);
     const initialPromoEndsAt = toDateInputValue(item.promo?.promoEndsAt);
     let promoPayload: NonNullable<UpdateItemDto['promo']> | undefined;
 
@@ -260,6 +267,13 @@ export function ItemDialog({
       promoPayload = {
         promoPriceEurCents,
         promoPriceBgnCents,
+      };
+    }
+
+    if (promoStartsAt !== initialPromoStartsAt) {
+      promoPayload = {
+        ...(promoPayload ?? {}),
+        promoStartsAt: promoStartsAt || null,
       };
     }
 
@@ -366,9 +380,16 @@ export function ItemDialog({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="item-promoEndsAt">{t('admin.menu.fields.promoEndsAt')}</Label>
-            <Input id="item-promoEndsAt" type="date" {...register('promoEndsAt')} disabled={isSubmitting} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="item-promoStartsAt">{t('admin.menu.fields.promoStartsAt')}</Label>
+              <Input id="item-promoStartsAt" type="date" {...register('promoStartsAt')} disabled={isSubmitting} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="item-promoEndsAt">{t('admin.menu.fields.promoEndsAt')}</Label>
+              <Input id="item-promoEndsAt" type="date" {...register('promoEndsAt')} disabled={isSubmitting} />
+            </div>
           </div>
 
           <DialogFooter>

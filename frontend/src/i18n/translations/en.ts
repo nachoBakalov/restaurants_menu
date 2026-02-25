@@ -77,6 +77,7 @@ export const en = {
   'admin.menu.fields.priceBgn': 'Price BGN (optional)',
   'admin.menu.fields.promoEur': 'Promo EUR (optional)',
   'admin.menu.fields.promoBgn': 'Promo BGN (optional)',
+  'admin.menu.fields.promoStartsAt': 'Promotion from (start date)',
   'admin.menu.fields.promoEndsAt': 'Promotion until (end date)',
   'admin.menu.fx.rate': '1 EUR = 1.95583 BGN',
   'admin.menu.actions.save': 'Save',
