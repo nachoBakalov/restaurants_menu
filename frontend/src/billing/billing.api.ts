@@ -3,6 +3,7 @@ import type { FeatureFlag } from './billing.types';
 
 type FeaturesEnvelope = {
   features?: unknown;
+  items?: unknown;
 };
 
 type RawFeature = {
@@ -29,6 +30,8 @@ function normalizeFeaturesPayload(payload: unknown): FeatureFlag[] {
   const maybeEnvelope = payload as FeaturesEnvelope;
   const rawList = isFeatureArray(maybeEnvelope?.features)
     ? maybeEnvelope.features
+    : isFeatureArray(maybeEnvelope?.items)
+      ? maybeEnvelope.items
     : isFeatureArray(payload)
       ? payload
       : [];

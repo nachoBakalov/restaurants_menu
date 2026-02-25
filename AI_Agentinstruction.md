@@ -488,6 +488,20 @@
 - Промени: Добавени са `allergens` и `promoEndsAt` в create/edit flow, запазено автоматично BGN preview от EUR чрез `watch`, добавен helper текст `1 EUR = 1.95583 BGN`, и разширен normalize mapper за `promoStartsAt/promoEndsAt`.
 - Validation: pnpm build (frontend OK)
 - Next: По избор — визуално показване на promo end date в item list cards за по-бърз admin преглед.
+
+### [2026-02-25] F6 Admin Kitchen Orders UI (tabs + drawer)
+- Задача: Имплементация на production-ready admin kitchen интерфейс за поръчки с feature gate ORDERING, tabs, list, drawer детайли и status actions.
+- Файлове: frontend/src/admin/orders/OrdersPage.tsx, frontend/src/admin/orders/orders.types.ts, frontend/src/admin/orders/orders.api.ts, frontend/src/admin/orders/useAdminOrders.ts, frontend/src/admin/orders/useAdminOrderDetails.ts, frontend/src/admin/orders/components/OrdersTabs.tsx, frontend/src/admin/orders/components/OrdersList.tsx, frontend/src/admin/orders/components/OrderDrawer.tsx, frontend/src/admin/orders/components/OrderStatusBadge.tsx, frontend/src/i18n/translations/bg.ts, frontend/src/i18n/translations/en.ts, frontend/README.md
+- Промени: Добавени статус tabs (`NEW/IN_PROGRESS/READY/COMPLETED`), списък на поръчки, drawer с детайли и бутони за преход на статус, query invalidation след update и auto-refresh на `NEW` tab (5s).
+- Validation: pnpm build (frontend OK), API smoke flow `NEW -> IN_PROGRESS -> READY -> COMPLETED` (OK)
+- Next: По избор — добавяне на manual restaurant scope selector за SUPERADMIN (`restaurantId`) в UI.
+
+### [2026-02-25] ORDERING gate parser compatibility fix
+- Задача: Корекция на frontend parser за billing features, когато backend връща envelope с `items`.
+- Файлове: frontend/src/billing/billing.api.ts, frontend/README.md
+- Промени: `normalizeFeaturesPayload` вече поддържа `features`, `items` и директен масив; фиксирано е грешното показване „Поръчки изисква план" при активен план.
+- Validation: pnpm build (frontend OK)
+- Next: По избор — backend/frontend contract тест за `GET /admin/billing/features` response shape.
 ```
 
 ## 11) Known limitations (кратко)
