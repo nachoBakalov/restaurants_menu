@@ -9,6 +9,10 @@ This template provides a minimal setup to get React working in Vite with HMR and
 - Added category image support in Admin Menu Builder (create/edit input, preview, and edit prefill).
 - Updated category DTO/types in frontend menu layer to support optional nullable `imageUrl`.
 - Synced admin menu contract handling with backend optional fields used by latest menu updates.
+- Added item `allergens` optional field in create/edit dialog and request payload.
+- Added item promo end date field (`promoEndsAt`) in create/edit dialog and request payload.
+- Added FX helper text in item pricing section: `1 EUR = 1.95583 BGN`.
+- Extended item API normalization to preserve promo date fields (`promoStartsAt`, `promoEndsAt`).
 
 ### 2026-02-24
 

@@ -6,6 +6,8 @@ type RawItem = Item & {
   priceBgnCents?: number | null;
   promoPriceEurCents?: number | null;
   promoPriceBgnCents?: number | null;
+  promoStartsAt?: string | null;
+  promoEndsAt?: string | null;
 };
 
 function normalizeItem(raw: RawItem): Item {
@@ -25,6 +27,14 @@ function normalizeItem(raw: RawItem): Item {
   const flatPromoBgn = raw.promoPriceBgnCents;
   const promoPriceBgnCents = nestedPromoBgn ?? flatPromoBgn;
 
+  const nestedPromoStartsAt = raw.promo?.promoStartsAt;
+  const flatPromoStartsAt = raw.promoStartsAt;
+  const promoStartsAt = nestedPromoStartsAt ?? flatPromoStartsAt;
+
+  const nestedPromoEndsAt = raw.promo?.promoEndsAt;
+  const flatPromoEndsAt = raw.promoEndsAt;
+  const promoEndsAt = nestedPromoEndsAt ?? flatPromoEndsAt;
+
   return {
     ...raw,
     prices:
@@ -35,10 +45,15 @@ function normalizeItem(raw: RawItem): Item {
           }
         : undefined,
     promo:
-      promoPriceEurCents !== undefined || promoPriceBgnCents !== undefined
+      promoPriceEurCents !== undefined ||
+      promoPriceBgnCents !== undefined ||
+      promoStartsAt !== undefined ||
+      promoEndsAt !== undefined
         ? {
             ...(promoPriceEurCents !== undefined ? { promoPriceEurCents } : {}),
             ...(promoPriceBgnCents !== undefined ? { promoPriceBgnCents } : {}),
+            ...(promoStartsAt !== undefined ? { promoStartsAt } : {}),
+            ...(promoEndsAt !== undefined ? { promoEndsAt } : {}),
           }
         : undefined,
   };

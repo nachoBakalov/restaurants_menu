@@ -25,11 +25,13 @@ type ItemDialogProps = {
 type ItemFormValues = {
   name: string;
   description: string;
+  allergens: string;
   imageUrl: string;
   sortOrder: number;
   isAvailable: boolean;
   priceEur: string;
   promoEur: string;
+  promoEndsAt: string;
 };
 
 const FX = 1.95583;
@@ -67,6 +69,14 @@ function sameOrEmpty(left?: string, right?: string): boolean {
   return (left ?? '').trim() === (right ?? '').trim();
 }
 
+function toDateInputValue(value?: string | null): string {
+  if (!value) {
+    return '';
+  }
+
+  return value.slice(0, 10);
+}
+
 export function ItemDialog({
   open,
   onOpenChange,
@@ -85,6 +95,7 @@ export function ItemDialog({
       z.object({
         name: z.string().trim().min(2, t('auth.validation.required')),
         description: z.string(),
+        allergens: z.string(),
         imageUrl: z.string(),
         sortOrder: z.number().min(0, t('auth.validation.required')),
         isAvailable: z.boolean(),
@@ -105,6 +116,7 @@ export function ItemDialog({
             const cents = toCents(value);
             return cents !== null && cents > 0;
           }, t('auth.validation.required')),
+        promoEndsAt: z.string(),
       }),
     [t],
   );
@@ -120,11 +132,13 @@ export function ItemDialog({
     defaultValues: {
       name: item?.name ?? '',
       description: item?.description ?? '',
+      allergens: item?.allergens ?? '',
       imageUrl: item?.imageUrl ?? '',
       sortOrder: item?.sortOrder ?? 0,
       isAvailable: item?.isAvailable ?? true,
       priceEur: centsToDecimal(item?.prices?.priceEurCents),
       promoEur: centsToDecimal(item?.promo?.promoPriceEurCents),
+      promoEndsAt: toDateInputValue(item?.promo?.promoEndsAt),
     },
   });
 
@@ -144,11 +158,13 @@ export function ItemDialog({
     reset({
       name: item?.name ?? '',
       description: item?.description ?? '',
+      allergens: item?.allergens ?? '',
       imageUrl: item?.imageUrl ?? '',
       sortOrder: item?.sortOrder ?? 0,
       isAvailable: item?.isAvailable ?? true,
       priceEur: centsToDecimal(item?.prices?.priceEurCents),
       promoEur: centsToDecimal(item?.promo?.promoPriceEurCents),
+      promoEndsAt: toDateInputValue(item?.promo?.promoEndsAt),
     });
   }, [item, open, reset]);
 
@@ -157,6 +173,8 @@ export function ItemDialog({
     const priceBgnCents = eurCentsToBgnCents(priceEurCents);
     const promoPriceEurCents = toCents(values.promoEur);
     const promoPriceBgnCents = eurCentsToBgnCents(promoPriceEurCents);
+    const promoEndsAt = values.promoEndsAt.trim();
+    const normalizedAllergens = values.allergens.trim();
     const normalizedImageUrl = values.imageUrl.trim() || null;
 
     if (priceEurCents === null) {
@@ -168,6 +186,7 @@ export function ItemDialog({
         categoryId,
         name: values.name.trim(),
         description: values.description.trim() || undefined,
+        allergens: normalizedAllergens || undefined,
         imageUrl: normalizedImageUrl,
         isAvailable: values.isAvailable,
         sortOrder: values.sortOrder,
@@ -175,11 +194,12 @@ export function ItemDialog({
           priceEurCents,
           ...(priceBgnCents !== null ? { priceBgnCents } : {}),
         },
-        ...(promoPriceEurCents !== null || promoPriceBgnCents !== null
+        ...(promoPriceEurCents !== null || promoPriceBgnCents !== null || Boolean(promoEndsAt)
           ? {
               promo: {
                 ...(promoPriceEurCents !== null ? { promoPriceEurCents } : {}),
                 ...(promoPriceBgnCents !== null ? { promoPriceBgnCents } : {}),
+                ...(promoEndsAt ? { promoEndsAt } : {}),
               },
             }
           : {}),
@@ -201,6 +221,12 @@ export function ItemDialog({
 
     if (!sameOrEmpty(values.description, item.description)) {
       updatePayload.description = values.description.trim() || undefined;
+    }
+
+    const normalizedAllergensValue = normalizedAllergens || null;
+    const initialAllergens = item.allergens ?? null;
+    if (normalizedAllergensValue !== initialAllergens) {
+      updatePayload.allergens = normalizedAllergensValue;
     }
 
     const initialImageUrl = item.imageUrl ?? null;
@@ -227,11 +253,25 @@ export function ItemDialog({
 
     const initialPromoEur = item.promo?.promoPriceEurCents ?? null;
     const initialPromoBgn = item.promo?.promoPriceBgnCents ?? null;
+    const initialPromoEndsAt = toDateInputValue(item.promo?.promoEndsAt);
+    let promoPayload: NonNullable<UpdateItemDto['promo']> | undefined;
+
     if (promoPriceEurCents !== initialPromoEur || promoPriceBgnCents !== initialPromoBgn) {
-      updatePayload.promo = {
+      promoPayload = {
         promoPriceEurCents,
         promoPriceBgnCents,
       };
+    }
+
+    if (promoEndsAt !== initialPromoEndsAt) {
+      promoPayload = {
+        ...(promoPayload ?? {}),
+        promoEndsAt: promoEndsAt || null,
+      };
+    }
+
+    if (promoPayload) {
+      updatePayload.promo = promoPayload;
     }
 
     if (Object.keys(updatePayload).length === 0) {
@@ -269,6 +309,16 @@ export function ItemDialog({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="item-allergens">{t('admin.menu.fields.allergens')}</Label>
+            <textarea
+              id="item-allergens"
+              className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              {...register('allergens')}
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="item-imageUrl">{t('admin.menu.fields.imageUrl')}</Label>
             <Input id="item-imageUrl" placeholder="https://..." {...register('imageUrl')} disabled={isSubmitting} />
             {imagePreview ? (
@@ -299,6 +349,7 @@ export function ItemDialog({
             <div className="space-y-2">
               <Label htmlFor="item-priceBgn">{t('admin.menu.fields.priceBgn')}</Label>
               <Input id="item-priceBgn" placeholder="19.53" value={priceBgnPreview} readOnly disabled />
+              <p className="text-xs text-muted-foreground">{t('admin.menu.fx.rate')}</p>
             </div>
           </div>
 
@@ -313,6 +364,11 @@ export function ItemDialog({
               <Label htmlFor="item-promoBgn">{t('admin.menu.fields.promoBgn')}</Label>
               <Input id="item-promoBgn" placeholder="15.63" value={promoBgnPreview} readOnly disabled />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="item-promoEndsAt">{t('admin.menu.fields.promoEndsAt')}</Label>
+            <Input id="item-promoEndsAt" type="date" {...register('promoEndsAt')} disabled={isSubmitting} />
           </div>
 
           <DialogFooter>

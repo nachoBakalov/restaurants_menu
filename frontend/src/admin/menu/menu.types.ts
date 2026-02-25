@@ -11,6 +11,7 @@ export type Item = {
   name: string;
   description?: string;
   imageUrl?: string | null;
+  allergens?: string | null;
   isAvailable: boolean;
   sortOrder: number;
   prices?: {
@@ -20,6 +21,8 @@ export type Item = {
   promo?: {
     promoPriceEurCents?: number | null;
     promoPriceBgnCents?: number | null;
+    promoStartsAt?: string | null;
+    promoEndsAt?: string | null;
   };
 };
 
@@ -40,6 +43,7 @@ export type CreateItemDto = {
   name: string;
   description?: string;
   imageUrl?: string | null;
+  allergens?: string | null;
   isAvailable?: boolean;
   sortOrder?: number;
   prices: {
@@ -49,6 +53,8 @@ export type CreateItemDto = {
   promo?: {
     promoPriceEurCents?: number;
     promoPriceBgnCents?: number;
+    promoStartsAt?: string | null;
+    promoEndsAt?: string | null;
   };
 };
 
@@ -57,6 +63,7 @@ export type UpdateItemDto = {
   name?: string;
   description?: string;
   imageUrl?: string | null;
+  allergens?: string | null;
   isAvailable?: boolean;
   sortOrder?: number;
   prices?: {
@@ -66,5 +73,7 @@ export type UpdateItemDto = {
   promo?: {
     promoPriceEurCents?: number | null;
     promoPriceBgnCents?: number | null;
+    promoStartsAt?: string | null;
+    promoEndsAt?: string | null;
   };
 };

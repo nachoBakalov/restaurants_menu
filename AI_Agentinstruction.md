@@ -481,6 +481,13 @@
 - Промени: Добавени category imageUrl поле/миграция/DTO mapping, UI input+preview за category image, и nullable съвместимост за `imageUrl`/`allergens` в create item DTO.
 - Validation: npm run build (backend OK), pnpm build (frontend OK), npm run test:e2e (11/11 passing)
 - Next: По избор — визуализация на category image в публичното меню UI (ако е в scope на frontend public page).
+
+### [2026-02-25] Frontend menu dialog UX/data parity (allergens + promo end)
+- Задача: Допълване на Admin Menu Builder item формата с optional allergens и promo end date, плюс FX helper UX без промяна на ценовата логика.
+- Файлове: frontend/src/admin/menu/components/ItemDialog.tsx, frontend/src/admin/menu/menu.types.ts, frontend/src/admin/menu/menu.api.ts, frontend/src/i18n/translations/bg.ts, frontend/src/i18n/translations/en.ts, frontend/README.md
+- Промени: Добавени са `allergens` и `promoEndsAt` в create/edit flow, запазено автоматично BGN preview от EUR чрез `watch`, добавен helper текст `1 EUR = 1.95583 BGN`, и разширен normalize mapper за `promoStartsAt/promoEndsAt`.
+- Validation: pnpm build (frontend OK)
+- Next: По избор — визуално показване на promo end date в item list cards за по-бърз admin преглед.
 ```
 
 ## 11) Known limitations (кратко)
