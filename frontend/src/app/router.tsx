@@ -6,6 +6,7 @@ import { RequireAuth } from '../admin/layout/RequireAuth';
 import { MenuPage } from '../admin/menu/MenuPage';
 import { OrdersPage } from '../admin/orders/OrdersPage';
 import { RestaurantsPage } from '../admin/restaurants/RestaurantsPage';
+import { SettingsPage } from '../admin/settings/SettingsPage';
 import { LoginPage } from '../auth/LoginPage';
 import { PublicMenuPage } from '../public/pages/PublicMenuPage';
 import { RegisterPage } from '../auth/RegisterPage';
@@ -47,6 +48,10 @@ export const router = createBrowserRouter([
       {
         path: 'restaurants',
         element: <RestaurantsPage />,
+      },
+      {
+        path: 'settings',
+        element: <SettingsPage />,
       },
     ],
   },

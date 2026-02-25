@@ -1,4 +1,4 @@
-import { Building2, CreditCard, LayoutDashboard, Menu as MenuIcon, ShoppingCart, UtensilsCrossed } from 'lucide-react';
+import { Building2, CreditCard, LayoutDashboard, Menu as MenuIcon, Settings, ShoppingCart, UtensilsCrossed } from 'lucide-react';
 import type { ComponentType } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useFeatures } from '../../billing/useFeatures';
@@ -48,6 +48,7 @@ export function AdminLayout() {
       disabled: ordersDisabled,
       badge: ordersDisabled ? t('admin.nav.ordersLockedBadge') : undefined,
     },
+    { to: '/admin/settings', label: t('admin.settings.title'), icon: Settings },
     { to: '/admin/billing', label: t('admin.nav.billing'), icon: CreditCard },
   ];
 
@@ -56,6 +57,7 @@ export function AdminLayout() {
     '/admin/restaurants': t('admin.restaurants.title'),
     '/admin/menu': t('admin.pageTitles.menu'),
     '/admin/orders': t('admin.pageTitles.orders'),
+    '/admin/settings': t('admin.settings.title'),
     '/admin/billing': t('admin.pageTitles.billing'),
   };
 

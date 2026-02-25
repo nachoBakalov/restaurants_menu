@@ -29,6 +29,7 @@ All notable changes to this repository are documented in this file.
 - Added admin restaurant settings endpoints (`GET/PATCH /admin/restaurant/settings`) for managing ordering visibility/timezone/schedule with OWNER/STAFF and SUPERADMIN scoped access.
 - Public restaurant responses now include computed ordering availability block (`visible`, `availableNow`, `timezone`, `schedule`, `nextOpenAt`).
 - Public order creation now enforces ordering runtime rules and returns `ORDERING_HIDDEN` / `ORDERING_CLOSED` (with `nextOpenAt`) when ordering is not currently allowed.
+- Frontend admin now includes `/admin/settings` page for ordering configuration: visibility toggle, timezone field, and weekly schedule editor with always-open mode (`orderingSchedule = null`).
 
 ### Validation
 - `backend`: `npm run build` ✅
