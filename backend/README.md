@@ -77,6 +77,18 @@ curl -X GET http://localhost:3000/admin/restaurants \
 ```
 
 ```bash
+curl -X PATCH http://localhost:3000/admin/restaurants/<RESTAURANT_ID> \
+  -H "Authorization: Bearer <SUPERADMIN_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Bella Bonita",
+    "slug": "bella-bonita",
+    "logoUrl": "https://cdn.example.com/logo.png",
+    "coverImageUrl": "https://cdn.example.com/cover.jpg"
+  }'
+```
+
+```bash
 curl -X POST http://localhost:3000/admin/restaurants/create-with-owner \
   -H "Authorization: Bearer <SUPERADMIN_ACCESS_TOKEN>" \
   -H "Content-Type: application/json" \
@@ -227,6 +239,7 @@ curl -X DELETE http://localhost:3000/admin/items/<ITEM_ID> \
 - Migration: `backend/prisma/migrations/20260224125130_v2/migration.sql` adds nullable `Category.imageUrl` (`TEXT`).
 - Aligned create item DTO optional nullability for `imageUrl` and `allergens`.
 - Added `GET /admin/restaurants` (SUPERADMIN) for restaurant listing with stable response envelope.
+- Added `PATCH /admin/restaurants/:id` (SUPERADMIN) for partial restaurant updates including branding fields (`logoUrl`, `coverImageUrl`).
 - Enabled `GET /admin/billing/features?restaurantId=<id>` for SUPERADMIN impersonation while keeping OWNER/STAFF scoped behavior.
 - Documented SUPERADMIN scoped usage for admin endpoints via `restaurantId` query (`/admin/categories`, `/admin/orders`) used by frontend impersonation flow.
 - Validation snapshot: `npm run build` (OK), `npm run test:e2e` (11/11 passing).

@@ -14,6 +14,8 @@ All notable changes to this repository are documented in this file.
 - Admin Orders now has F6 Kitchen UI in `/admin/orders`: tabs (`NEW/IN_PROGRESS/READY/COMPLETED`), order list, right-side drawer details, and status transition actions.
 - Frontend billing features parser now supports backend envelope shape `{ items: [...] }`, fixing false `ORDERING` locked state in admin menu/orders.
 - Frontend now supports SUPERADMIN restaurant impersonation with `/admin/restaurants`, persisted active restaurant scope, and automatic `restaurantId` query scoping for admin API calls (with exclusions for global restaurant/owner admin endpoints).
+- SUPERADMIN restaurant management now supports branding fields (`logoUrl`, `coverImageUrl`) in create/list/update flows, including `PATCH /admin/restaurants/:id`.
+- Public restaurant responses now consistently expose branding fields in both `/public/restaurants/:slug` and `/public/restaurants/:slug/menu` restaurant block.
 
 ### Validation
 - `backend`: `npm run build` ✅

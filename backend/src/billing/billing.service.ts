@@ -7,6 +7,7 @@ import { CreateRestaurantWithOwnerDto } from './dto/create-restaurant-with-owner
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { ResetOwnerPasswordDto } from './dto/reset-owner-password.dto';
 import { SetFeatureOverrideDto } from './dto/set-feature-override.dto';
+import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
 import { FeatureFlagService } from './feature-flag.service';
 
 @Injectable()
@@ -63,6 +64,8 @@ export class BillingService {
           data: {
             name: dto.restaurantName,
             slug: dto.slug,
+            logoUrl: dto.logoUrl ?? null,
+            coverImageUrl: dto.coverImageUrl ?? null,
           },
         });
 
@@ -93,6 +96,10 @@ export class BillingService {
           id: result.restaurant.id,
           name: result.restaurant.name,
           slug: result.restaurant.slug,
+          logoUrl: result.restaurant.logoUrl,
+          coverImageUrl: result.restaurant.coverImageUrl,
+          createdAt: result.restaurant.createdAt.toISOString(),
+          updatedAt: result.restaurant.updatedAt.toISOString(),
         },
         owner: {
           id: result.owner.id,
@@ -117,6 +124,8 @@ export class BillingService {
         id: true,
         name: true,
         slug: true,
+        logoUrl: true,
+        coverImageUrl: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -127,11 +136,71 @@ export class BillingService {
         id: restaurant.id,
         name: restaurant.name,
         slug: restaurant.slug,
+        logoUrl: restaurant.logoUrl,
+        coverImageUrl: restaurant.coverImageUrl,
         createdAt: restaurant.createdAt.toISOString(),
         updatedAt: restaurant.updatedAt.toISOString(),
       })),
       nextCursor: null,
     };
+  }
+
+  async updateRestaurant(restaurantId: string, dto: UpdateRestaurantDto) {
+    const existingRestaurant = await this.prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      select: { id: true },
+    });
+
+    if (!existingRestaurant) {
+      throw new NotFoundException('Restaurant not found');
+    }
+
+    if (dto.slug) {
+      const existingSlug = await this.prisma.restaurant.findUnique({
+        where: { slug: dto.slug },
+        select: { id: true },
+      });
+
+      if (existingSlug && existingSlug.id !== restaurantId) {
+        throw new ConflictException('Slug already exists');
+      }
+    }
+
+    try {
+      const updated = await this.prisma.restaurant.update({
+        where: { id: restaurantId },
+        data: {
+          ...(dto.name !== undefined ? { name: dto.name } : {}),
+          ...(dto.slug !== undefined ? { slug: dto.slug } : {}),
+          ...(dto.logoUrl !== undefined ? { logoUrl: dto.logoUrl } : {}),
+          ...(dto.coverImageUrl !== undefined ? { coverImageUrl: dto.coverImageUrl } : {}),
+        },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          logoUrl: true,
+          coverImageUrl: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      return {
+        id: updated.id,
+        name: updated.name,
+        slug: updated.slug,
+        logoUrl: updated.logoUrl,
+        coverImageUrl: updated.coverImageUrl,
+        createdAt: updated.createdAt.toISOString(),
+        updatedAt: updated.updatedAt.toISOString(),
+      };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException('Slug already exists');
+      }
+      throw error;
+    }
   }
 
   async createRestaurantSubscription(restaurantId: string, dto: CreateSubscriptionDto) {

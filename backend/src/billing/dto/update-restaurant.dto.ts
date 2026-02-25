@@ -1,23 +1,18 @@
-import { IsEmail, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
-export class CreateRestaurantWithOwnerDto {
-  @IsEmail()
-  email!: string;
-
-  @IsString()
-  @MinLength(8)
-  password!: string;
-
+export class UpdateRestaurantDto {
+  @IsOptional()
   @IsString()
   @MinLength(2)
   @MaxLength(120)
-  restaurantName!: string;
+  name?: string;
 
+  @IsOptional()
   @IsString()
   @Matches(/^[a-z0-9-]+$/)
   @MinLength(3)
   @MaxLength(80)
-  slug!: string;
+  slug?: string;
 
   @IsOptional()
   @IsString()

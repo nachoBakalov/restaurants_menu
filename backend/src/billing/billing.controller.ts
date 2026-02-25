@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { Request } from 'express';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -10,6 +10,7 @@ import { CreateRestaurantWithOwnerDto } from './dto/create-restaurant-with-owner
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { ResetOwnerPasswordDto } from './dto/reset-owner-password.dto';
 import { SetFeatureOverrideDto } from './dto/set-feature-override.dto';
+import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
 
 type AuthenticatedRequest = Request & { user: AuthUser };
 
@@ -29,6 +30,13 @@ export class BillingController {
   @Roles(UserRole.SUPERADMIN)
   listRestaurants() {
     return this.billingService.listRestaurants();
+  }
+
+  @Patch('restaurants/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPERADMIN)
+  updateRestaurant(@Param('id') restaurantId: string, @Body() dto: UpdateRestaurantDto) {
+    return this.billingService.updateRestaurant(restaurantId, dto);
   }
 
   @Get('restaurants/:id/owners')
