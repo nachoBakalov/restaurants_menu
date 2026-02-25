@@ -4,6 +4,12 @@ This template provides a minimal setup to get React working in Vite with HMR and
 
 ## Release notes
 
+### 2026-02-25
+
+- Added category image support in Admin Menu Builder (create/edit input, preview, and edit prefill).
+- Updated category DTO/types in frontend menu layer to support optional nullable `imageUrl`.
+- Synced admin menu contract handling with backend optional fields used by latest menu updates.
+
 ### 2026-02-24
 
 - Implemented Admin Menu Builder page (`/admin/menu`) with categories/items CRUD, availability toggle, and create/edit/delete dialogs.

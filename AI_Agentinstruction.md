@@ -474,6 +474,13 @@
 - Промени: `deleteCategory` вече не връща validation error за non-empty category; вместо това изпълнява transaction: `deleteMany(items by categoryId)` -> `delete(category)`.
 - Validation: npm run build (OK)
 - Next: По избор — soft-delete стратегия за items/categories, ако е нужен audit/history вместо hard delete.
+
+### [2026-02-25] Category image + optional menu contract alignment
+- Задача: Добавяне на optional `Category.imageUrl` end-to-end и синхронизиране на optional nullable полета за item payload-и.
+- Файлове: backend/prisma/schema.prisma, backend/prisma/migrations/20260224125130_v2/migration.sql, backend/src/admin-menu/dto/categories.dto.ts, backend/src/admin-menu/dto/items.dto.ts, backend/src/admin-menu/admin-menu.service.ts, backend/src/common/mappers/api-contract.mappers.ts, backend/src/public/dto/menu.response.dto.ts, backend/src/public/dto/public-menu.dto.ts, frontend/src/admin/menu/menu.types.ts, frontend/src/admin/menu/components/CategoryDialog.tsx, frontend/src/admin/menu/MenuPage.tsx
+- Промени: Добавени category imageUrl поле/миграция/DTO mapping, UI input+preview за category image, и nullable съвместимост за `imageUrl`/`allergens` в create item DTO.
+- Validation: npm run build (backend OK), pnpm build (frontend OK), npm run test:e2e (11/11 passing)
+- Next: По избор — визуализация на category image в публичното меню UI (ако е в scope на frontend public page).
 ```
 
 ## 11) Known limitations (кратко)

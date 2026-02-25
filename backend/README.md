@@ -196,3 +196,12 @@ curl -X PATCH http://localhost:3000/admin/items/<ITEM_ID> \
 curl -X DELETE http://localhost:3000/admin/items/<ITEM_ID> \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
+
+## Release notes
+
+### 2026-02-25
+
+- Added optional `Category.imageUrl` support end-to-end (Prisma schema, migration, admin DTO/service, public DTO/mapper).
+- Migration: `backend/prisma/migrations/20260224125130_v2/migration.sql` adds nullable `Category.imageUrl` (`TEXT`).
+- Aligned create item DTO optional nullability for `imageUrl` and `allergens`.
+- Validation snapshot: `npm run build` (OK), `npm run test:e2e` (11/11 passing).
