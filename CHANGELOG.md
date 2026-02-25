@@ -18,6 +18,9 @@ All notable changes to this repository are documented in this file.
 - Public restaurant responses now consistently expose branding fields in both `/public/restaurants/:slug` and `/public/restaurants/:slug/menu` restaurant block.
 - Frontend `/admin/restaurants` now supports branding UX for SUPERADMIN: logo thumbnail in list, edit dialog (`name/slug/logoUrl/coverImageUrl`) with live previews, and create flow with optional branding fields.
 - Public restaurant contract now includes `features.ORDERING` resolved via existing feature-flag service with safe fallback to `false` on resolver errors.
+- Added public customer-facing route `/:slug` with a luxe menu UI, category navigation, item detail dialog, and localized empty/error/loading states.
+- Added frontend public ordering flow gated by `restaurant.features.ORDERING`: cart, checkout dialog (TABLE/DELIVERY), and success state after order submission.
+- Added frontend public module scaffolding (`public/api`, `public/cart`, `public/theme`) to keep customer menu, API contracts, and theming isolated from admin flows.
 
 ### Validation
 - `backend`: `npm run build` ✅

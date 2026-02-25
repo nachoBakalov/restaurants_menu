@@ -23,6 +23,10 @@ This template provides a minimal setup to get React working in Vite with HMR and
 - Extended `/admin/restaurants` table with logo thumbnail preview and per-row `Edit` action.
 - Added edit dialog with `react-hook-form + zod` for `name`, `slug`, `logoUrl`, `coverImageUrl` and inline logo/cover previews.
 - Extended create-with-owner dialog with optional `logoUrl` and `coverImageUrl`; includes fallback PATCH branding after create to support backend variants.
+- Added public customer-facing route `/:slug` with restaurant hero, category tabs, item cards, and item details dialog.
+- Added public API layer (`public.api.ts`, `public.types.ts`) for restaurant/menu/order contract handling in the customer flow.
+- Added ORDERING-gated customer cart + checkout flow (TABLE/DELIVERY) with localized submit/success/error states.
+- Added public module scaffolding for theme and cart state (`public/theme`, `public/cart`) to keep customer experience isolated from admin code.
 
 ### 2026-02-24
 

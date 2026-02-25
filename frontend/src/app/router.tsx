@@ -7,6 +7,7 @@ import { MenuPage } from '../admin/menu/MenuPage';
 import { OrdersPage } from '../admin/orders/OrdersPage';
 import { RestaurantsPage } from '../admin/restaurants/RestaurantsPage';
 import { LoginPage } from '../auth/LoginPage';
+import { PublicMenuPage } from '../public/pages/PublicMenuPage';
 import { RegisterPage } from '../auth/RegisterPage';
 import { NotFoundPage } from './NotFoundPage';
 
@@ -48,6 +49,10 @@ export const router = createBrowserRouter([
         element: <RestaurantsPage />,
       },
     ],
+  },
+  {
+    path: '/:slug',
+    element: <PublicMenuPage />,
   },
   {
     path: '*',
