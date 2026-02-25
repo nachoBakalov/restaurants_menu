@@ -7,22 +7,52 @@ import type { AuthUser, LoginResponse, RegisterOwnerRequest } from './auth.types
 
 type AuthContextValue = {
   user: AuthUser | null;
+  activeRestaurantId: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   registerOwner: (dto: RegisterOwnerRequest) => Promise<void>;
+  setActiveRestaurantId: (id: string | null) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const ACTIVE_RESTAURANT_STORAGE_KEY = 'fy_active_restaurant_id';
+
+function getStoredActiveRestaurantId(): string | null {
+  const value = localStorage.getItem(ACTIVE_RESTAURANT_STORAGE_KEY);
+  return value && value.trim().length > 0 ? value : null;
+}
+
+function clearStoredActiveRestaurantId() {
+  localStorage.removeItem(ACTIVE_RESTAURANT_STORAGE_KEY);
+}
+
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [activeRestaurantId, setActiveRestaurantIdState] = useState<string | null>(() => getStoredActiveRestaurantId());
   const [isLoading, setIsLoading] = useState(true);
+
+  const setActiveRestaurantId = useCallback((id: string | null) => {
+    if (!id) {
+      clearStoredActiveRestaurantId();
+      setActiveRestaurantIdState(null);
+      return;
+    }
+
+    localStorage.setItem(ACTIVE_RESTAURANT_STORAGE_KEY, id);
+    setActiveRestaurantIdState(id);
+  }, []);
 
   const applyLoginResponse = useCallback((response: LoginResponse) => {
     setTokens(response.accessToken, response.refreshToken);
     setUser(response.user);
+
+    if (response.user.role !== 'SUPERADMIN') {
+      clearStoredActiveRestaurantId();
+      setActiveRestaurantIdState(null);
+    }
   }, []);
 
   const login = useCallback(
@@ -55,6 +85,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const logout = useCallback(() => {
     clearTokens();
+    clearStoredActiveRestaurantId();
+    setActiveRestaurantIdState(null);
     setUser(null);
   }, []);
 
@@ -74,9 +106,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const currentUser = await meRequest();
         if (isMounted) {
           setUser(currentUser);
+
+          if (currentUser.role !== 'SUPERADMIN') {
+            clearStoredActiveRestaurantId();
+            setActiveRestaurantIdState(null);
+          }
         }
       } catch {
         if (isMounted) {
+          clearStoredActiveRestaurantId();
+          setActiveRestaurantIdState(null);
           setUser(null);
         }
       } finally {
@@ -108,13 +147,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
+      activeRestaurantId,
       isLoading,
       isAuthenticated: Boolean(getAccessToken()),
       login,
       registerOwner,
+      setActiveRestaurantId,
       logout,
     }),
-    [isLoading, login, logout, registerOwner, user],
+    [activeRestaurantId, isLoading, login, logout, registerOwner, setActiveRestaurantId, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

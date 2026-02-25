@@ -1,4 +1,4 @@
-import { CreditCard, LayoutDashboard, Menu as MenuIcon, ShoppingCart, UtensilsCrossed } from 'lucide-react';
+import { Building2, CreditCard, LayoutDashboard, Menu as MenuIcon, ShoppingCart, UtensilsCrossed } from 'lucide-react';
 import type { ComponentType } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useFeatures } from '../../billing/useFeatures';
@@ -28,16 +28,18 @@ type NavItem = {
 };
 
 export function AdminLayout() {
-  const { logout, user } = useAuth();
+  const { logout, user, activeRestaurantId, setActiveRestaurantId } = useAuth();
   const { t } = useT();
   const { isEnabled, isLoading } = useFeatures();
   const location = useLocation();
   const navigate = useNavigate();
   const orderingEnabled = isEnabled('ORDERING');
   const ordersDisabled = !isLoading && !orderingEnabled;
+  const isSuperadmin = user?.role === 'SUPERADMIN';
 
   const navItems: NavItem[] = [
     { to: '/admin', label: t('admin.nav.dashboard'), icon: LayoutDashboard },
+    ...(isSuperadmin ? [{ to: '/admin/restaurants', label: t('admin.nav.restaurants'), icon: Building2 }] : []),
     { to: '/admin/menu', label: t('admin.nav.menu'), icon: UtensilsCrossed },
     {
       to: '/admin/orders',
@@ -51,6 +53,7 @@ export function AdminLayout() {
 
   const titleByPath: Record<string, string> = {
     '/admin': t('admin.pageTitles.dashboard'),
+    '/admin/restaurants': t('admin.restaurants.title'),
     '/admin/menu': t('admin.pageTitles.menu'),
     '/admin/orders': t('admin.pageTitles.orders'),
     '/admin/billing': t('admin.pageTitles.billing'),
@@ -161,6 +164,20 @@ export function AdminLayout() {
             </div>
 
             <div className="flex items-center gap-2">
+              {isSuperadmin && activeRestaurantId ? (
+                <>
+                  <Badge variant="secondary" className="hidden md:inline-flex">
+                    {t('admin.restaurants.scopeBadge')}: {activeRestaurantId.slice(0, 8)}
+                  </Badge>
+                  <Button type="button" variant="outline" size="sm" onClick={() => navigate('/admin/restaurants')}>
+                    {t('admin.restaurants.actions.enter')}
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setActiveRestaurantId(null)}>
+                    {t('admin.restaurants.actions.clearScope')}
+                  </Button>
+                </>
+              ) : null}
+
               <LanguageSwitcher />
 
               <DropdownMenu>

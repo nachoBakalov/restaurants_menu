@@ -5,6 +5,7 @@ import { AdminLayout } from '../admin/layout/AdminLayout';
 import { RequireAuth } from '../admin/layout/RequireAuth';
 import { MenuPage } from '../admin/menu/MenuPage';
 import { OrdersPage } from '../admin/orders/OrdersPage';
+import { RestaurantsPage } from '../admin/restaurants/RestaurantsPage';
 import { LoginPage } from '../auth/LoginPage';
 import { RegisterPage } from '../auth/RegisterPage';
 import { NotFoundPage } from './NotFoundPage';
@@ -41,6 +42,10 @@ export const router = createBrowserRouter([
       {
         path: 'billing',
         element: <BillingPage />,
+      },
+      {
+        path: 'restaurants',
+        element: <RestaurantsPage />,
       },
     ],
   },
