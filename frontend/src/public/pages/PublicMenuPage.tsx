@@ -337,12 +337,12 @@ function PublicMenuContent() {
 
                         <PriceBlock item={item} showBgn={showBgn} />
 
-                        <div className="flex items-center justify-between gap-2">
-                          <Button type="button" variant="outline" size="sm" onClick={() => setSelectedItem(item)}>
-                            {t('admin.menu.editItem')}
-                          </Button>
+                        {orderingAllowedNow ? (
+                          <div className="flex items-center justify-between gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={() => setSelectedItem(item)}>
+                              {t('admin.menu.editItem')}
+                            </Button>
 
-                          {orderingAllowedNow ? (
                             <Button
                               type="button"
                               size="sm"
@@ -361,8 +361,8 @@ function PublicMenuContent() {
                             >
                               {t('public.menu.add')}
                             </Button>
-                          ) : null}
-                        </div>
+                          </div>
+                        ) : null}
                       </CardContent>
                     </Card>
                   );
@@ -413,12 +413,12 @@ function PublicMenuContent() {
 
                           <PriceBlock item={item} showBgn={showBgn} />
 
-                          <div className="flex items-center justify-between gap-2">
-                            <Button type="button" variant="outline" size="sm" onClick={() => setSelectedItem(item)}>
-                              {t('admin.menu.editItem')}
-                            </Button>
+                          {orderingAllowedNow ? (
+                            <div className="flex items-center justify-between gap-2">
+                              <Button type="button" variant="outline" size="sm" onClick={() => setSelectedItem(item)}>
+                                {t('admin.menu.editItem')}
+                              </Button>
 
-                            {orderingAllowedNow ? (
                               <Button
                                 type="button"
                                 size="sm"
@@ -437,8 +437,8 @@ function PublicMenuContent() {
                               >
                                 {t('public.menu.add')}
                               </Button>
-                            ) : null}
-                          </div>
+                            </div>
+                          ) : null}
                         </CardContent>
                       </Card>
                     );

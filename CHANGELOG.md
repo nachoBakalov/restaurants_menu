@@ -31,6 +31,7 @@ All notable changes to this repository are documented in this file.
 - Public order creation now enforces ordering runtime rules and returns `ORDERING_HIDDEN` / `ORDERING_CLOSED` (with `nextOpenAt`) when ordering is not currently allowed.
 - Frontend admin now includes `/admin/settings` page for ordering configuration: visibility toggle, timezone field, and weekly schedule editor with always-open mode (`orderingSchedule = null`).
 - Public menu ordering UI is now gated by runtime policy (`features.ORDERING && ordering.visible && ordering.availableNow`), with hidden add/cart/checkout controls when ordering is not currently allowed and informational next-open message support.
+- Public menu item details button is now hidden together with add-to-cart when ordering is not currently allowed, keeping action visibility consistent with ordering policy.
 
 ### Validation
 - `backend`: `npm run build` ✅
