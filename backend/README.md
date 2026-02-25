@@ -72,6 +72,11 @@ curl -X PATCH http://localhost:3000/admin/orders/<ORDER_ID>/status \
 ### Billing (SUPERADMIN)
 
 ```bash
+curl -X GET http://localhost:3000/admin/restaurants \
+  -H "Authorization: Bearer <SUPERADMIN_ACCESS_TOKEN>"
+```
+
+```bash
 curl -X POST http://localhost:3000/admin/restaurants/create-with-owner \
   -H "Authorization: Bearer <SUPERADMIN_ACCESS_TOKEN>" \
   -H "Content-Type: application/json" \
@@ -121,6 +126,13 @@ curl -X POST http://localhost:3000/admin/restaurants/<RESTAURANT_ID>/features/OR
 ```bash
 curl -X GET http://localhost:3000/admin/billing/features \
   -H "Authorization: Bearer <OWNER_ACCESS_TOKEN>"
+```
+
+### Billing (SUPERADMIN impersonation)
+
+```bash
+curl -X GET "http://localhost:3000/admin/billing/features?restaurantId=<RESTAURANT_ID>" \
+  -H "Authorization: Bearer <SUPERADMIN_ACCESS_TOKEN>"
 ```
 
 ### Admin QR menu (OWNER, SVG)
@@ -204,4 +216,6 @@ curl -X DELETE http://localhost:3000/admin/items/<ITEM_ID> \
 - Added optional `Category.imageUrl` support end-to-end (Prisma schema, migration, admin DTO/service, public DTO/mapper).
 - Migration: `backend/prisma/migrations/20260224125130_v2/migration.sql` adds nullable `Category.imageUrl` (`TEXT`).
 - Aligned create item DTO optional nullability for `imageUrl` and `allergens`.
+- Added `GET /admin/restaurants` (SUPERADMIN) for restaurant listing with stable response envelope.
+- Enabled `GET /admin/billing/features?restaurantId=<id>` for SUPERADMIN impersonation while keeping OWNER/STAFF scoped behavior.
 - Validation snapshot: `npm run build` (OK), `npm run test:e2e` (11/11 passing).

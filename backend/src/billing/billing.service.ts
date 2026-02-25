@@ -109,6 +109,31 @@ export class BillingService {
     }
   }
 
+  async listRestaurants() {
+    const restaurants = await this.prisma.restaurant.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return {
+      items: restaurants.map((restaurant) => ({
+        id: restaurant.id,
+        name: restaurant.name,
+        slug: restaurant.slug,
+        createdAt: restaurant.createdAt.toISOString(),
+        updatedAt: restaurant.updatedAt.toISOString(),
+      })),
+      nextCursor: null,
+    };
+  }
+
   async createRestaurantSubscription(restaurantId: string, dto: CreateSubscriptionDto) {
     const restaurant = await this.prisma.restaurant.findUnique({ where: { id: restaurantId } });
     if (!restaurant) {
@@ -192,10 +217,8 @@ export class BillingService {
     };
   }
 
-  async getResolvedFeatures(user: AuthUser) {
-    if (!user.restaurantId) {
-      throw new ForbiddenException('Restaurant scope not found');
-    }
+  async getResolvedFeatures(user: AuthUser, requestedRestaurantId?: string) {
+    const restaurantId = this.resolveFeaturesRestaurantId(user, requestedRestaurantId);
 
     const features = await this.prisma.feature.findMany({
       orderBy: { key: 'asc' },
@@ -205,7 +228,7 @@ export class BillingService {
     const resolved = await Promise.all(
       features.map(async (feature) => ({
         key: feature.key,
-        enabled: await this.featureFlagService.isFeatureEnabled(user.restaurantId!, feature.key),
+        enabled: await this.featureFlagService.isFeatureEnabled(restaurantId, feature.key),
       })),
     );
 
@@ -241,5 +264,35 @@ export class BillingService {
       owner: updatedOwner,
       message: 'Owner password reset successfully',
     };
+  }
+
+  private resolveFeaturesRestaurantId(user: AuthUser, requestedRestaurantId?: string): string {
+    if (user.role === UserRole.SUPERADMIN) {
+      if (!requestedRestaurantId) {
+        throw new BadRequestException({
+          code: 'VALIDATION_ERROR',
+          message: 'Validation failed',
+          details: [{ field: 'restaurantId', message: 'restaurantId is required for SUPERADMIN' }],
+        });
+      }
+
+      return requestedRestaurantId;
+    }
+
+    if (!user.restaurantId) {
+      throw new ForbiddenException({
+        code: 'FORBIDDEN',
+        message: 'Forbidden',
+      });
+    }
+
+    if (requestedRestaurantId && requestedRestaurantId !== user.restaurantId) {
+      throw new ForbiddenException({
+        code: 'FORBIDDEN',
+        message: 'Forbidden',
+      });
+    }
+
+    return user.restaurantId;
   }
 }

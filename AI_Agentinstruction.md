@@ -502,6 +502,13 @@
 - Промени: `normalizeFeaturesPayload` вече поддържа `features`, `items` и директен масив; фиксирано е грешното показване „Поръчки изисква план" при активен план.
 - Validation: pnpm build (frontend OK)
 - Next: По избор — backend/frontend contract тест за `GET /admin/billing/features` response shape.
+
+### [2026-02-25] Backend SUPERADMIN restaurant listing + billing impersonation
+- Задача: Добавяне на SUPERADMIN list endpoint за ресторанти и support за impersonation при billing features.
+- Файлове: backend/src/billing/billing.controller.ts, backend/src/billing/billing.service.ts, backend/README.md
+- Промени: Добавен `GET /admin/restaurants` (SUPERADMIN) с `{ items, nextCursor:null }`; `GET /admin/billing/features` вече допуска `OWNER/STAFF/SUPERADMIN`, като SUPERADMIN е с задължителен `restaurantId` query и `VALIDATION_ERROR` при липса.
+- Validation: npm run build (backend OK), npm run test:e2e (11/11 passing)
+- Next: По избор — добавяне на backend e2e сценарии за `GET /admin/restaurants` и SUPERADMIN validation/forbidden cases за billing features.
 ```
 
 ## 11) Known limitations (кратко)

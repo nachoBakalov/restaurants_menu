@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { Request } from 'express';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -22,6 +22,13 @@ export class BillingController {
   @Roles(UserRole.SUPERADMIN)
   createRestaurantWithOwner(@Body() dto: CreateRestaurantWithOwnerDto) {
     return this.billingService.createRestaurantWithOwner(dto);
+  }
+
+  @Get('restaurants')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPERADMIN)
+  listRestaurants() {
+    return this.billingService.listRestaurants();
   }
 
   @Get('restaurants/:id/owners')
@@ -58,8 +65,8 @@ export class BillingController {
 
   @Get('billing/features')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER)
-  getResolvedFeatures(@Req() req: AuthenticatedRequest) {
-    return this.billingService.getResolvedFeatures(req.user);
+  @Roles(UserRole.OWNER, UserRole.STAFF, UserRole.SUPERADMIN)
+  getResolvedFeatures(@Req() req: AuthenticatedRequest, @Query('restaurantId') restaurantId?: string) {
+    return this.billingService.getResolvedFeatures(req.user, restaurantId);
   }
 }
