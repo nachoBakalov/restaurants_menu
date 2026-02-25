@@ -11,6 +11,8 @@ All notable changes to this repository are documented in this file.
 
 ### Changed
 - Public menu category contracts now expose `imageUrl` in both DTO contract variants.
+- Admin Orders now has F6 Kitchen UI in `/admin/orders`: tabs (`NEW/IN_PROGRESS/READY/COMPLETED`), order list, right-side drawer details, and status transition actions.
+- Frontend billing features parser now supports backend envelope shape `{ items: [...] }`, fixing false `ORDERING` locked state in admin menu/orders.
 
 ### Validation
 - `backend`: `npm run build` ✅
