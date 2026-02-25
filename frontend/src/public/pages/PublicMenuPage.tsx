@@ -13,8 +13,9 @@ import { Card, CardContent } from '../../shared/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../shared/ui/dialog';
 import { Input } from '../../shared/ui/input';
 import { Label } from '../../shared/ui/label';
+import { Skeleton } from '../../shared/ui/skeleton';
 
-type CheckoutType = 'TABLE' | 'DELIVERY';
+type CheckoutType = 'TABLE' | 'DELIVERY' | 'TAKEAWAY';
 
 function formatMoney(cents: number, currency: 'EUR' | 'BGN'): string {
   return new Intl.NumberFormat('bg-BG', {
@@ -78,6 +79,7 @@ function PublicMenuContent() {
   const [itemQty, setItemQty] = useState(1);
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [checkoutType, setCheckoutType] = useState<CheckoutType>('TABLE');
   const [tableCode, setTableCode] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
@@ -112,6 +114,23 @@ function PublicMenuContent() {
   const categories = menuQuery.data?.categories ?? [];
   const orderingEnabled = Boolean(restaurant?.features.ORDERING);
   const showBgn = Boolean(restaurant?.currency.bgnActiveNow);
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+
+  const searchResults = useMemo(() => {
+    if (!normalizedSearch) {
+      return [] as Array<PublicMenuItem & { categoryName: string }>;
+    }
+
+    return categories.flatMap((category) =>
+      category.items
+        .filter((item) => {
+          const inName = item.name.toLowerCase().includes(normalizedSearch);
+          const inDescription = (item.description ?? '').toLowerCase().includes(normalizedSearch);
+          return inName || inDescription;
+        })
+        .map((item) => ({ ...item, categoryName: category.name })),
+    );
+  }, [categories, normalizedSearch]);
 
   useEffect(() => {
     if (!activeCategoryId && categories.length > 0) {
@@ -133,7 +152,9 @@ function PublicMenuContent() {
 
   const heroStyle = useMemo(
     () => ({
-      backgroundImage: restaurant?.coverImageUrl ? `linear-gradient(to top, rgba(0,0,0,0.50), rgba(0,0,0,0.15)), url(${restaurant.coverImageUrl})` : undefined,
+      backgroundImage: restaurant?.coverImageUrl
+        ? `linear-gradient(to top, rgba(0,0,0,0.50), rgba(0,0,0,0.15)), url(${restaurant.coverImageUrl})`
+        : 'linear-gradient(135deg, hsl(var(--muted)), hsl(var(--accent)))',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
     }),
@@ -145,7 +166,41 @@ function PublicMenuContent() {
   }
 
   if (restaurantQuery.isLoading || menuQuery.isLoading) {
-    return <p className="p-6 text-sm text-muted-foreground">{t('public.common.loading')}</p>;
+    return (
+      <main className={`min-h-screen ${theme.pageClassName}`}>
+        <div className="mx-auto w-full max-w-7xl px-4 py-4 md:px-6 md:py-6">
+          <section className={`${theme.heroClassName} overflow-hidden`}>
+            <div className="space-y-3 p-5 md:p-8">
+              <Skeleton className="h-6 w-36" />
+              <Skeleton className="h-9 w-60" />
+            </div>
+          </section>
+
+          <section className="mt-4 space-y-2">
+            <Skeleton className="h-10 w-full max-w-sm" />
+            <div className="flex gap-2 overflow-hidden">
+              <Skeleton className="h-9 w-24" />
+              <Skeleton className="h-9 w-24" />
+              <Skeleton className="h-9 w-24" />
+            </div>
+          </section>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={`skeleton-${index}`} className={`${theme.cardClassName} space-y-3 p-4`}>
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-8 w-28" />
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-4 text-sm text-muted-foreground">{t('public.common.loadingSkeleton')}</p>
+        </div>
+      </main>
+    );
   }
 
   if (restaurantQuery.error || menuQuery.error || !restaurant) {
@@ -183,7 +238,16 @@ function PublicMenuContent() {
           </div>
         </section>
 
-        <section className="sticky top-0 z-10 mt-4 border-y bg-background/95 py-3 backdrop-blur">
+        <section className="mt-4">
+          <Input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder={t('public.menu.searchPlaceholder')}
+            className="max-w-md"
+          />
+        </section>
+
+        <section className="sticky top-0 z-10 mt-3 border-y bg-background/95 py-3 backdrop-blur">
           <div className="flex gap-2 overflow-x-auto pb-1">
             {categories.map((category) => (
               <Button
@@ -203,78 +267,153 @@ function PublicMenuContent() {
         </section>
 
         <div className={`mt-5 ${theme.spacingClassName} pb-24 md:pb-8`}>
-          {categories.map((category) => (
-            <section key={category.id} id={`category-${category.id}`} className="scroll-mt-24 space-y-3">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold md:text-xl">{category.name}</h2>
-                <Badge variant="secondary">{category.items.length}</Badge>
-              </div>
-
+          {normalizedSearch ? (
+            searchResults.length > 0 ? (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {category.items.map((item) => (
-                  <Card key={item.id} className={`${theme.cardClassName} transition-transform duration-200 hover:-translate-y-0.5`}>
-                    <CardContent className="space-y-3 p-4">
-                      {(() => {
-                        const allergensText = formatAllergens(item.allergens as string | string[] | null | undefined);
+                {searchResults.map((item) => {
+                  const allergensText = formatAllergens(item.allergens as string | string[] | null | undefined);
 
-                        return (
-                          <>
-                      {item.imageUrl ? (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.name}
-                          loading="lazy"
-                          className="h-40 w-full rounded-md object-cover"
-                        />
-                      ) : null}
+                  return (
+                    <Card key={`${item.categoryName}-${item.id}`} className={`${theme.cardClassName} transition-transform duration-200 hover:-translate-y-0.5`}>
+                      <CardContent className="space-y-3 p-4">
+                        {item.imageUrl ? (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            loading="lazy"
+                            onError={(event) => {
+                              event.currentTarget.onerror = null;
+                              event.currentTarget.src = '/placeholder-food.png';
+                            }}
+                            className="h-40 w-full rounded-md object-cover"
+                          />
+                        ) : (
+                          <div className="h-40 w-full rounded-md bg-gradient-to-br from-muted to-accent/50" />
+                        )}
 
-                      <div className="space-y-1">
-                        <h3 className="text-base font-semibold">{item.name}</h3>
-                        {item.description ? <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p> : null}
-                        {allergensText ? (
-                          <p className="line-clamp-2 text-xs text-muted-foreground">
-                            {t('public.menu.allergensLabel')}: {allergensText}
-                          </p>
-                        ) : null}
-                      </div>
+                        <div className="space-y-1">
+                          <h3 className="text-base font-semibold">{item.name}</h3>
+                          <p className="text-xs text-muted-foreground">{item.categoryName}</p>
+                          {item.description ? <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p> : null}
+                          {allergensText ? (
+                            <p className="line-clamp-2 text-xs text-muted-foreground">
+                              {t('public.menu.allergensLabel')}: {allergensText}
+                            </p>
+                          ) : null}
+                        </div>
 
-                      <PriceBlock item={item} showBgn={showBgn} />
+                        <PriceBlock item={item} showBgn={showBgn} />
 
-                      <div className="flex items-center justify-between gap-2">
-                        <Button type="button" variant="outline" size="sm" onClick={() => setSelectedItem(item)}>
-                          {t('admin.menu.editItem')}
-                        </Button>
-
-                        {orderingEnabled ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            disabled={!item.isAvailable}
-                            onClick={() =>
-                              cart.addItem({
-                                itemId: item.id,
-                                name: item.name,
-                                unitPrice: {
-                                  eurCents: item.pricing.prices.EUR.currentCents,
-                                  bgnCents: showBgn ? (item.pricing.prices.BGN?.currentCents ?? null) : null,
-                                },
-                                qty: 1,
-                              })
-                            }
-                          >
-                            {t('public.menu.add')}
+                        <div className="flex items-center justify-between gap-2">
+                          <Button type="button" variant="outline" size="sm" onClick={() => setSelectedItem(item)}>
+                            {t('admin.menu.editItem')}
                           </Button>
-                        ) : null}
-                      </div>
-                          </>
-                        );
-                      })()}
-                    </CardContent>
-                  </Card>
-                ))}
+
+                          {orderingEnabled ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={!item.isAvailable}
+                              onClick={() =>
+                                cart.addItem({
+                                  itemId: item.id,
+                                  name: item.name,
+                                  unitPrice: {
+                                    eurCents: item.pricing.prices.EUR.currentCents,
+                                    bgnCents: showBgn ? (item.pricing.prices.BGN?.currentCents ?? null) : null,
+                                  },
+                                  qty: 1,
+                                })
+                              }
+                            >
+                              {t('public.menu.add')}
+                            </Button>
+                          ) : null}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
-            </section>
-          ))}
+            ) : (
+              <p className="text-sm text-muted-foreground">{t('public.menu.noResults')}</p>
+            )
+          ) : (
+            categories.map((category) => (
+              <section key={category.id} id={`category-${category.id}`} className="scroll-mt-24 space-y-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold md:text-xl">{category.name}</h2>
+                  <Badge variant="secondary">{category.items.length}</Badge>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {category.items.map((item) => {
+                    const allergensText = formatAllergens(item.allergens as string | string[] | null | undefined);
+
+                    return (
+                      <Card key={item.id} className={`${theme.cardClassName} transition-transform duration-200 hover:-translate-y-0.5`}>
+                        <CardContent className="space-y-3 p-4">
+                          {item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              loading="lazy"
+                              onError={(event) => {
+                                event.currentTarget.onerror = null;
+                                event.currentTarget.src = '/placeholder-food.png';
+                              }}
+                              className="h-40 w-full rounded-md object-cover"
+                            />
+                          ) : (
+                            <div className="h-40 w-full rounded-md bg-gradient-to-br from-muted to-accent/50" />
+                          )}
+
+                          <div className="space-y-1">
+                            <h3 className="text-base font-semibold">{item.name}</h3>
+                            {item.description ? <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p> : null}
+                            {allergensText ? (
+                              <p className="line-clamp-2 text-xs text-muted-foreground">
+                                {t('public.menu.allergensLabel')}: {allergensText}
+                              </p>
+                            ) : null}
+                          </div>
+
+                          <PriceBlock item={item} showBgn={showBgn} />
+
+                          <div className="flex items-center justify-between gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={() => setSelectedItem(item)}>
+                              {t('admin.menu.editItem')}
+                            </Button>
+
+                            {orderingEnabled ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                disabled={!item.isAvailable}
+                                onClick={() =>
+                                  cart.addItem({
+                                    itemId: item.id,
+                                    name: item.name,
+                                    unitPrice: {
+                                      eurCents: item.pricing.prices.EUR.currentCents,
+                                      bgnCents: showBgn ? (item.pricing.prices.BGN?.currentCents ?? null) : null,
+                                    },
+                                    qty: 1,
+                                  })
+                                }
+                              >
+                                {t('public.menu.add')}
+                              </Button>
+                            ) : null}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </section>
+            ))
+          )}
         </div>
       </div>
 
@@ -408,7 +547,16 @@ function PublicMenuContent() {
               </DialogHeader>
 
               {selectedItem.imageUrl ? (
-                <img src={selectedItem.imageUrl} alt={selectedItem.name} loading="lazy" className="h-48 w-full rounded-md object-cover" />
+                <img
+                  src={selectedItem.imageUrl}
+                  alt={selectedItem.name}
+                  loading="lazy"
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = '/placeholder-food.png';
+                  }}
+                  className="h-48 w-full rounded-md object-cover"
+                />
               ) : null}
 
               {formatAllergens(selectedItem.allergens as string | string[] | null | undefined) ? (
@@ -483,7 +631,7 @@ function PublicMenuContent() {
               </DialogHeader>
 
               <div className="space-y-4">
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button
                     type="button"
                     variant={checkoutType === 'TABLE' ? 'default' : 'outline'}
@@ -498,6 +646,13 @@ function PublicMenuContent() {
                   >
                     {t('public.checkout.type.delivery')}
                   </Button>
+                  <Button
+                    type="button"
+                    variant={checkoutType === 'TAKEAWAY' ? 'default' : 'outline'}
+                    onClick={() => setCheckoutType('TAKEAWAY')}
+                  >
+                    {t('public.checkout.type.takeaway')}
+                  </Button>
                 </div>
 
                 {checkoutType === 'TABLE' ? (
@@ -505,12 +660,16 @@ function PublicMenuContent() {
                     <Label htmlFor="tableCode">{t('public.checkout.tableCode')}</Label>
                     <Input id="tableCode" value={tableCode} onChange={(event) => setTableCode(event.target.value)} />
                   </div>
-                ) : (
+                ) : null}
+
+                {checkoutType === 'DELIVERY' ? (
                   <div className="space-y-2">
                     <Label htmlFor="deliveryAddress">{t('public.checkout.address')}</Label>
                     <Input id="deliveryAddress" value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} />
                   </div>
-                )}
+                ) : null}
+
+                {checkoutType === 'TAKEAWAY' ? <p className="text-xs text-muted-foreground">{t('public.checkout.takeawayInfo')}</p> : null}
 
                 <div className="space-y-2">
                   <Label htmlFor="phone">{t('public.checkout.phone')}</Label>
@@ -558,14 +717,26 @@ function PublicMenuContent() {
                       return;
                     }
 
-                    if (!deliveryAddress.trim()) {
-                      setCheckoutError(t('public.common.error'));
+                    if (checkoutType === 'DELIVERY') {
+                      if (!deliveryAddress.trim()) {
+                        setCheckoutError(t('public.common.error'));
+                        return;
+                      }
+
+                      await createOrderMutation.mutateAsync({
+                        type: 'DELIVERY',
+                        deliveryAddress: deliveryAddress.trim(),
+                        phone: phone.trim() || undefined,
+                        customerName: customerName.trim() || undefined,
+                        note: note.trim() || undefined,
+                        items,
+                      });
+
                       return;
                     }
 
                     await createOrderMutation.mutateAsync({
-                      type: 'DELIVERY',
-                      deliveryAddress: deliveryAddress.trim(),
+                      type: 'TAKEAWAY',
                       phone: phone.trim() || undefined,
                       customerName: customerName.trim() || undefined,
                       note: note.trim() || undefined,

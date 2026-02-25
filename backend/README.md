@@ -46,6 +46,22 @@ curl -X POST http://localhost:3000/public/restaurants/bellabonita/orders \
   }'
 ```
 
+### Public create order (TAKEAWAY)
+
+```bash
+curl -X POST http://localhost:3000/public/restaurants/bellabonita/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "TAKEAWAY",
+    "phone": "+359888123456",
+    "customerName": "Ivan",
+    "note": "Pickup in 20 minutes",
+    "items": [
+      { "itemId": "cmxxxxitem1", "qty": 1 }
+    ]
+  }'
+```
+
 ### Admin list orders (OWNER/STAFF JWT)
 
 ```bash

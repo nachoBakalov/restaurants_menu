@@ -80,12 +80,19 @@ export type CreatePublicOrderPayload =
       customerName?: string;
       note?: string;
       items: PublicOrderItemInput[];
+    }
+  | {
+      type: 'TAKEAWAY';
+      phone?: string;
+      customerName?: string;
+      note?: string;
+      items: PublicOrderItemInput[];
     };
 
 export type CreatePublicOrderResponse = {
   orderId: string;
   status: string;
-  type: 'TABLE' | 'DELIVERY';
+  type: 'TABLE' | 'DELIVERY' | 'TAKEAWAY';
   createdAt: string;
   totals: {
     EUR: { totalCents: number };

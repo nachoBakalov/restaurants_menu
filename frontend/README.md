@@ -29,6 +29,8 @@ This template provides a minimal setup to get React working in Vite with HMR and
 - Added public module scaffolding for theme and cart state (`public/theme`, `public/cart`) to keep customer experience isolated from admin code.
 - Added allergens rendering in public item cards with localized label and subtle truncated text.
 - Added cart item removal controls in public cart UI; mobile remove now decrements quantity step-by-step and auto-removes item at zero.
+- Added public menu UX polish: category smooth-scroll tabs, lightweight search across name/description with no-results state, skeleton loading layout, and item/cover image fallback behavior.
+- Extended public checkout with `TAKEAWAY` flow and dynamic field rendering/validation for `TABLE` vs `DELIVERY` vs `TAKEAWAY`.
 
 ### 2026-02-24
 

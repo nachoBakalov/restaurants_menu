@@ -23,6 +23,8 @@ All notable changes to this repository are documented in this file.
 - Added frontend public module scaffolding (`public/api`, `public/cart`, `public/theme`) to keep customer menu, API contracts, and theming isolated from admin flows.
 - Public menu item cards now show optional allergens with subtle truncated text (`Алергени: ...`) when present.
 - Public cart UX now supports item removal controls on both desktop and mobile; mobile remove now decrements quantity by 1 and auto-removes at zero.
+- Public menu UX polish: search input with cross-category results, smooth category scroll tabs, skeleton loading state, and safe image fallbacks for cover/item images.
+- Public checkout now supports `TAKEAWAY` type with conditional field validation (no `tableCode`/`deliveryAddress` required) and updated frontend/backend order contracts.
 
 ### Validation
 - `backend`: `npm run build` ✅

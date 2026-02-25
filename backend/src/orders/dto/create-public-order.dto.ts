@@ -30,7 +30,7 @@ export class CreatePublicOrderItemDto {
 }
 
 export class CreatePublicOrderDto {
-  @IsIn([OrderType.TABLE, OrderType.DELIVERY])
+  @IsIn([OrderType.TABLE, OrderType.DELIVERY, OrderType.TAKEAWAY])
   type!: OrderType;
 
   @ValidateIf((dto: CreatePublicOrderDto) => dto.type === OrderType.TABLE)
@@ -65,7 +65,7 @@ export class CreatePublicOrderDto {
 export class CreatePublicOrderResponseDto {
   orderId!: string;
   status!: 'NEW';
-  type!: 'DELIVERY' | 'TABLE';
+  type!: 'DELIVERY' | 'TABLE' | 'TAKEAWAY';
   createdAt!: string;
   totals!: {
     EUR: { totalCents: number };
