@@ -19,6 +19,10 @@ This template provides a minimal setup to get React working in Vite with HMR and
 - Added SUPERADMIN impersonation flow with `/admin/restaurants` page for list/create/select/clear active restaurant scope.
 - Added persisted `activeRestaurantId` in auth context and automatic `restaurantId` query scoping for `/admin/*` frontend requests (excluding `/admin/restaurants*` and `/admin/owners*`).
 - Added SUPERADMIN scope UX in admin layout (restaurants nav item, scope badge, quick switch, clear scope action).
+- Added restaurants API wrapper (`restaurants.api.ts`) with `fetchRestaurants`, `createWithOwner`, and `updateRestaurant` for branding-aware CRUD flows.
+- Extended `/admin/restaurants` table with logo thumbnail preview and per-row `Edit` action.
+- Added edit dialog with `react-hook-form + zod` for `name`, `slug`, `logoUrl`, `coverImageUrl` and inline logo/cover previews.
+- Extended create-with-owner dialog with optional `logoUrl` and `coverImageUrl`; includes fallback PATCH branding after create to support backend variants.
 
 ### 2026-02-24
 
