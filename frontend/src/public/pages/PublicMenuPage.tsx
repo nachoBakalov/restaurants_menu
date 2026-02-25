@@ -26,6 +26,18 @@ function formatMoney(cents: number, currency: 'EUR' | 'BGN'): string {
   }).format(cents / 100);
 }
 
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('bg-BG', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date);
+}
+
 function PriceBlock({
   item,
   showBgn,
@@ -112,7 +124,10 @@ function PublicMenuContent() {
 
   const restaurant = restaurantQuery.data ?? menuQuery.data?.restaurant;
   const categories = menuQuery.data?.categories ?? [];
-  const orderingEnabled = Boolean(restaurant?.features.ORDERING);
+  const orderingFeatureEnabled = Boolean(restaurant?.features.ORDERING);
+  const orderingVisible = Boolean(restaurant?.ordering.visible);
+  const orderingAvailableNow = Boolean(restaurant?.ordering.availableNow);
+  const orderingAllowedNow = orderingFeatureEnabled && orderingVisible && orderingAvailableNow;
   const showBgn = Boolean(restaurant?.currency.bgnActiveNow);
   const normalizedSearch = searchQuery.trim().toLowerCase();
 
@@ -143,6 +158,13 @@ function PublicMenuContent() {
       setIsCheckoutOpen(false);
     }
   }, [cart.items.length, isCheckoutOpen]);
+
+  useEffect(() => {
+    if (!orderingAllowedNow) {
+      setIsCheckoutOpen(false);
+      setIsMobileCartOpen(false);
+    }
+  }, [orderingAllowedNow]);
 
   useEffect(() => {
     if (cart.items.length === 0 && isMobileCartOpen) {
@@ -245,6 +267,17 @@ function PublicMenuContent() {
             placeholder={t('public.menu.searchPlaceholder')}
             className="max-w-md"
           />
+          {!orderingAllowedNow ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {!orderingFeatureEnabled
+                ? 'Поръчките не са налични за този ресторант.'
+                : !orderingVisible
+                  ? 'Поръчките са временно скрити.'
+                  : restaurant.ordering.nextOpenAt
+                    ? `Следващо отваряне: ${formatDateTime(restaurant.ordering.nextOpenAt)}`
+                    : 'Поръчките в момента не се приемат.'}
+            </p>
+          ) : null}
         </section>
 
         <section className="sticky top-0 z-10 mt-3 border-y bg-background/95 py-3 backdrop-blur">
@@ -309,7 +342,7 @@ function PublicMenuContent() {
                             {t('admin.menu.editItem')}
                           </Button>
 
-                          {orderingEnabled ? (
+                          {orderingAllowedNow ? (
                             <Button
                               type="button"
                               size="sm"
@@ -385,7 +418,7 @@ function PublicMenuContent() {
                               {t('admin.menu.editItem')}
                             </Button>
 
-                            {orderingEnabled ? (
+                            {orderingAllowedNow ? (
                               <Button
                                 type="button"
                                 size="sm"
@@ -417,7 +450,7 @@ function PublicMenuContent() {
         </div>
       </div>
 
-      {orderingEnabled && cart.items.length > 0 ? (
+      {orderingAllowedNow && cart.items.length > 0 ? (
         <>
           <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 p-3 backdrop-blur md:hidden">
             <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
@@ -567,7 +600,7 @@ function PublicMenuContent() {
 
               <PriceBlock item={selectedItem} showBgn={showBgn} />
 
-              {orderingEnabled ? (
+              {orderingAllowedNow ? (
                 <DialogFooter className="flex w-full items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Button type="button" variant="outline" size="sm" onClick={() => setItemQty((current) => Math.max(1, current - 1))}>-</Button>
@@ -599,158 +632,160 @@ function PublicMenuContent() {
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={isCheckoutOpen}
-        onOpenChange={(nextOpen) => {
-          setIsCheckoutOpen(nextOpen);
-          if (!nextOpen) {
-            setCheckoutError(null);
-            setSuccessOrder(null);
-          }
-        }}
-      >
-        <DialogContent>
-          {successOrder ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>{t('public.order.successTitle')}</DialogTitle>
-                <DialogDescription>
-                  {t('public.order.successDesc')} #{successOrder.orderId} ({successOrder.status})
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button type="button" onClick={() => setIsCheckoutOpen(false)}>
-                  OK
-                </Button>
-              </DialogFooter>
-            </>
-          ) : (
-            <>
-              <DialogHeader>
-                <DialogTitle>{t('public.checkout.title')}</DialogTitle>
-              </DialogHeader>
+      {orderingAllowedNow ? (
+        <Dialog
+          open={isCheckoutOpen}
+          onOpenChange={(nextOpen) => {
+            setIsCheckoutOpen(nextOpen);
+            if (!nextOpen) {
+              setCheckoutError(null);
+              setSuccessOrder(null);
+            }
+          }}
+        >
+          <DialogContent>
+            {successOrder ? (
+              <>
+                <DialogHeader>
+                  <DialogTitle>{t('public.order.successTitle')}</DialogTitle>
+                  <DialogDescription>
+                    {t('public.order.successDesc')} #{successOrder.orderId} ({successOrder.status})
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button type="button" onClick={() => setIsCheckoutOpen(false)}>
+                    OK
+                  </Button>
+                </DialogFooter>
+              </>
+            ) : (
+              <>
+                <DialogHeader>
+                  <DialogTitle>{t('public.checkout.title')}</DialogTitle>
+                </DialogHeader>
 
-              <div className="space-y-4">
-                <div className="flex gap-2 flex-wrap">
-                  <Button
-                    type="button"
-                    variant={checkoutType === 'TABLE' ? 'default' : 'outline'}
-                    onClick={() => setCheckoutType('TABLE')}
-                  >
-                    {t('public.checkout.type.table')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={checkoutType === 'DELIVERY' ? 'default' : 'outline'}
-                    onClick={() => setCheckoutType('DELIVERY')}
-                  >
-                    {t('public.checkout.type.delivery')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={checkoutType === 'TAKEAWAY' ? 'default' : 'outline'}
-                    onClick={() => setCheckoutType('TAKEAWAY')}
-                  >
-                    {t('public.checkout.type.takeaway')}
-                  </Button>
-                </div>
-
-                {checkoutType === 'TABLE' ? (
-                  <div className="space-y-2">
-                    <Label htmlFor="tableCode">{t('public.checkout.tableCode')}</Label>
-                    <Input id="tableCode" value={tableCode} onChange={(event) => setTableCode(event.target.value)} />
+                <div className="space-y-4">
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      type="button"
+                      variant={checkoutType === 'TABLE' ? 'default' : 'outline'}
+                      onClick={() => setCheckoutType('TABLE')}
+                    >
+                      {t('public.checkout.type.table')}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={checkoutType === 'DELIVERY' ? 'default' : 'outline'}
+                      onClick={() => setCheckoutType('DELIVERY')}
+                    >
+                      {t('public.checkout.type.delivery')}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={checkoutType === 'TAKEAWAY' ? 'default' : 'outline'}
+                      onClick={() => setCheckoutType('TAKEAWAY')}
+                    >
+                      {t('public.checkout.type.takeaway')}
+                    </Button>
                   </div>
-                ) : null}
 
-                {checkoutType === 'DELIVERY' ? (
+                  {checkoutType === 'TABLE' ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="tableCode">{t('public.checkout.tableCode')}</Label>
+                      <Input id="tableCode" value={tableCode} onChange={(event) => setTableCode(event.target.value)} />
+                    </div>
+                  ) : null}
+
+                  {checkoutType === 'DELIVERY' ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="deliveryAddress">{t('public.checkout.address')}</Label>
+                      <Input id="deliveryAddress" value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} />
+                    </div>
+                  ) : null}
+
+                  {checkoutType === 'TAKEAWAY' ? <p className="text-xs text-muted-foreground">{t('public.checkout.takeawayInfo')}</p> : null}
+
                   <div className="space-y-2">
-                    <Label htmlFor="deliveryAddress">{t('public.checkout.address')}</Label>
-                    <Input id="deliveryAddress" value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} />
+                    <Label htmlFor="phone">{t('public.checkout.phone')}</Label>
+                    <Input id="phone" value={phone} onChange={(event) => setPhone(event.target.value)} />
                   </div>
-                ) : null}
 
-                {checkoutType === 'TAKEAWAY' ? <p className="text-xs text-muted-foreground">{t('public.checkout.takeawayInfo')}</p> : null}
+                  <div className="space-y-2">
+                    <Label htmlFor="customerName">{t('public.checkout.name')}</Label>
+                    <Input id="customerName" value={customerName} onChange={(event) => setCustomerName(event.target.value)} />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">{t('public.checkout.phone')}</Label>
-                  <Input id="phone" value={phone} onChange={(event) => setPhone(event.target.value)} />
+                  <div className="space-y-2">
+                    <Label htmlFor="note">{t('public.checkout.note')}</Label>
+                    <Input id="note" value={note} onChange={(event) => setNote(event.target.value)} />
+                  </div>
+
+                  <ApiErrorAlert error={createOrderMutation.error} />
+                  {checkoutError ? <p className="text-sm text-destructive">{checkoutError}</p> : null}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="customerName">{t('public.checkout.name')}</Label>
-                  <Input id="customerName" value={customerName} onChange={(event) => setCustomerName(event.target.value)} />
-                </div>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    disabled={createOrderMutation.isPending || cart.items.length === 0}
+                    onClick={async () => {
+                      setCheckoutError(null);
 
-                <div className="space-y-2">
-                  <Label htmlFor="note">{t('public.checkout.note')}</Label>
-                  <Input id="note" value={note} onChange={(event) => setNote(event.target.value)} />
-                </div>
+                      const items = cart.items.map((entry) => ({ itemId: entry.itemId, qty: entry.qty }));
 
-                <ApiErrorAlert error={createOrderMutation.error} />
-                {checkoutError ? <p className="text-sm text-destructive">{checkoutError}</p> : null}
-              </div>
+                      if (checkoutType === 'TABLE') {
+                        if (!tableCode.trim()) {
+                          setCheckoutError(t('public.common.error'));
+                          return;
+                        }
 
-              <DialogFooter>
-                <Button
-                  type="button"
-                  disabled={createOrderMutation.isPending || cart.items.length === 0}
-                  onClick={async () => {
-                    setCheckoutError(null);
+                        await createOrderMutation.mutateAsync({
+                          type: 'TABLE',
+                          tableCode: tableCode.trim(),
+                          phone: phone.trim() || undefined,
+                          customerName: customerName.trim() || undefined,
+                          note: note.trim() || undefined,
+                          items,
+                        });
 
-                    const items = cart.items.map((entry) => ({ itemId: entry.itemId, qty: entry.qty }));
+                        return;
+                      }
 
-                    if (checkoutType === 'TABLE') {
-                      if (!tableCode.trim()) {
-                        setCheckoutError(t('public.common.error'));
+                      if (checkoutType === 'DELIVERY') {
+                        if (!deliveryAddress.trim()) {
+                          setCheckoutError(t('public.common.error'));
+                          return;
+                        }
+
+                        await createOrderMutation.mutateAsync({
+                          type: 'DELIVERY',
+                          deliveryAddress: deliveryAddress.trim(),
+                          phone: phone.trim() || undefined,
+                          customerName: customerName.trim() || undefined,
+                          note: note.trim() || undefined,
+                          items,
+                        });
+
                         return;
                       }
 
                       await createOrderMutation.mutateAsync({
-                        type: 'TABLE',
-                        tableCode: tableCode.trim(),
+                        type: 'TAKEAWAY',
                         phone: phone.trim() || undefined,
                         customerName: customerName.trim() || undefined,
                         note: note.trim() || undefined,
                         items,
                       });
-
-                      return;
-                    }
-
-                    if (checkoutType === 'DELIVERY') {
-                      if (!deliveryAddress.trim()) {
-                        setCheckoutError(t('public.common.error'));
-                        return;
-                      }
-
-                      await createOrderMutation.mutateAsync({
-                        type: 'DELIVERY',
-                        deliveryAddress: deliveryAddress.trim(),
-                        phone: phone.trim() || undefined,
-                        customerName: customerName.trim() || undefined,
-                        note: note.trim() || undefined,
-                        items,
-                      });
-
-                      return;
-                    }
-
-                    await createOrderMutation.mutateAsync({
-                      type: 'TAKEAWAY',
-                      phone: phone.trim() || undefined,
-                      customerName: customerName.trim() || undefined,
-                      note: note.trim() || undefined,
-                      items,
-                    });
-                  }}
-                >
-                  {t('public.checkout.submit')}
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+                    }}
+                  >
+                    {t('public.checkout.submit')}
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </main>
   );
 }

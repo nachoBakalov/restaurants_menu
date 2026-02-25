@@ -32,6 +32,7 @@ This template provides a minimal setup to get React working in Vite with HMR and
 - Added public menu UX polish: category smooth-scroll tabs, lightweight search across name/description with no-results state, skeleton loading layout, and item/cover image fallback behavior.
 - Extended public checkout with `TAKEAWAY` flow and dynamic field rendering/validation for `TABLE` vs `DELIVERY` vs `TAKEAWAY`.
 - Added admin settings page (`/admin/settings`) with API integration for restaurant ordering controls (`orderingVisible`, `orderingTimezone`, `orderingSchedule`), including weekly schedule editor and always-open mode.
+- Updated public ordering UI gating to use backend availability contract (`features.ORDERING`, `ordering.visible`, `ordering.availableNow`, `ordering.nextOpenAt`), hiding add/cart/checkout when ordering is unavailable and showing status info text.
 
 ### 2026-02-24
 

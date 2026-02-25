@@ -17,6 +17,13 @@ export type PublicRestaurant = {
   coverImageUrl: string | null;
   currency: PublicCurrency;
   features: PublicFeatures;
+  ordering: {
+    visible: boolean;
+    availableNow: boolean;
+    timezone: string;
+    schedule: Record<string, unknown> | null;
+    nextOpenAt: string | null;
+  };
 };
 
 export type MoneyCurrentOriginal = {
