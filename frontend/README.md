@@ -16,6 +16,9 @@ This template provides a minimal setup to get React working in Vite with HMR and
 - Implemented Admin Kitchen Orders UI in `/admin/orders`: status tabs, list, details drawer, and status actions (`NEW -> IN_PROGRESS -> READY -> COMPLETED`).
 - Added orders data layer (`orders.api`, query hooks, strict types) with `NEW` tab polling every 5s and optional `restaurantId` support in API params.
 - Fixed billing features parser to accept backend payload shape `{ items: [...] }` so ORDERING gate reflects active plan correctly.
+- Added SUPERADMIN impersonation flow with `/admin/restaurants` page for list/create/select/clear active restaurant scope.
+- Added persisted `activeRestaurantId` in auth context and automatic `restaurantId` query scoping for `/admin/*` frontend requests (excluding `/admin/restaurants*` and `/admin/owners*`).
+- Added SUPERADMIN scope UX in admin layout (restaurants nav item, scope badge, quick switch, clear scope action).
 
 ### 2026-02-24
 

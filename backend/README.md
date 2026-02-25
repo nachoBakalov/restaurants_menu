@@ -135,6 +135,16 @@ curl -X GET "http://localhost:3000/admin/billing/features?restaurantId=<RESTAURA
   -H "Authorization: Bearer <SUPERADMIN_ACCESS_TOKEN>"
 ```
 
+```bash
+curl -X GET "http://localhost:3000/admin/categories?restaurantId=<RESTAURANT_ID>" \
+  -H "Authorization: Bearer <SUPERADMIN_ACCESS_TOKEN>"
+```
+
+```bash
+curl -X GET "http://localhost:3000/admin/orders?status=NEW&restaurantId=<RESTAURANT_ID>" \
+  -H "Authorization: Bearer <SUPERADMIN_ACCESS_TOKEN>"
+```
+
 ### Admin QR menu (OWNER, SVG)
 
 ```bash
@@ -218,4 +228,5 @@ curl -X DELETE http://localhost:3000/admin/items/<ITEM_ID> \
 - Aligned create item DTO optional nullability for `imageUrl` and `allergens`.
 - Added `GET /admin/restaurants` (SUPERADMIN) for restaurant listing with stable response envelope.
 - Enabled `GET /admin/billing/features?restaurantId=<id>` for SUPERADMIN impersonation while keeping OWNER/STAFF scoped behavior.
+- Documented SUPERADMIN scoped usage for admin endpoints via `restaurantId` query (`/admin/categories`, `/admin/orders`) used by frontend impersonation flow.
 - Validation snapshot: `npm run build` (OK), `npm run test:e2e` (11/11 passing).
