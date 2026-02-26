@@ -32,6 +32,7 @@ All notable changes to this repository are documented in this file.
 - Frontend admin now includes `/admin/settings` page for ordering configuration: visibility toggle, timezone field, and weekly schedule editor with always-open mode (`orderingSchedule = null`).
 - Public menu ordering UI is now gated by runtime policy (`features.ORDERING && ordering.visible && ordering.availableNow`), with hidden add/cart/checkout controls when ordering is not currently allowed and informational next-open message support.
 - Public menu item details button is now hidden together with add-to-cart when ordering is not currently allowed, keeping action visibility consistent with ordering policy.
+- Admin Dashboard (`/admin`) now includes a QR card with live menu QR preview and direct SVG/PNG download actions, including SUPERADMIN scoped restaurant support via existing impersonation query injection.
 
 ### Validation
 - `backend`: `npm run build` ✅
