@@ -223,6 +223,14 @@ curl -X GET http://localhost:3000/admin/qr/menu \
   -H "Accept: image/svg+xml"
 ```
 
+### Admin QR menu (OWNER, PNG)
+
+```bash
+curl -X GET "http://localhost:3000/admin/qr/menu?format=png" \
+  -H "Authorization: Bearer <TOKEN>" \
+  --output menu.png
+```
+
 ### Admin categories (OWNER/STAFF JWT)
 
 ```bash

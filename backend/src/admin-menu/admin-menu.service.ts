@@ -16,6 +16,26 @@ export class AdminMenuService {
   ) {}
 
   async getMenuQrSvg(user: AuthUser, restaurantId?: string) {
+    const menuUrl = await this.getMenuUrl(user, restaurantId);
+
+    return QRCode.toString(menuUrl, {
+      type: 'svg',
+      margin: 1,
+      width: 512,
+    });
+  }
+
+  async getMenuQrPngBuffer(user: AuthUser, restaurantId?: string) {
+    const menuUrl = await this.getMenuUrl(user, restaurantId);
+
+    return QRCode.toBuffer(menuUrl, {
+      type: 'png',
+      margin: 1,
+      width: 512,
+    });
+  }
+
+  private async getMenuUrl(user: AuthUser, restaurantId?: string): Promise<string> {
     const resolvedRestaurantId = this.resolveRestaurantId(user, restaurantId);
 
     const restaurant = await this.prisma.restaurant.findUnique({
@@ -28,13 +48,7 @@ export class AdminMenuService {
     }
 
     const baseUrl = this.configService.get<string>('BASE_URL')!;
-    const menuUrl = `${baseUrl.replace(/\/+$/, '')}/${restaurant.slug}`;
-
-    return QRCode.toString(menuUrl, {
-      type: 'svg',
-      margin: 1,
-      width: 512,
-    });
+    return `${baseUrl.replace(/\/+$/, '')}/${restaurant.slug}`;
   }
 
   async getCategories(user: AuthUser, restaurantId?: string) {

@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -19,9 +19,41 @@ export class AdminMenuController {
 
   @Get('qr/menu')
   @Roles(UserRole.OWNER, UserRole.SUPERADMIN)
-  @Header('Content-Type', 'image/svg+xml')
-  getMenuQr(@Req() req: AuthenticatedRequest, @Query('restaurantId') restaurantId?: string) {
-    return this.adminMenuService.getMenuQrSvg(req.user, restaurantId);
+  async getMenuQr(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response,
+    @Headers('accept') acceptHeader?: string,
+    @Query('format') format?: string,
+    @Query('restaurantId') restaurantId?: string,
+  ) {
+    const resolvedFormat = this.resolveQrFormat(format, acceptHeader);
+
+    if (resolvedFormat === 'png') {
+      const png = await this.adminMenuService.getMenuQrPngBuffer(req.user, restaurantId);
+      res.setHeader('Content-Type', 'image/png');
+      res.send(png);
+      return;
+    }
+
+    const svg = await this.adminMenuService.getMenuQrSvg(req.user, restaurantId);
+    res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+    res.send(svg);
+  }
+
+  private resolveQrFormat(format?: string, acceptHeader?: string): 'svg' | 'png' {
+    if (format?.toLowerCase() === 'png') {
+      return 'png';
+    }
+
+    if (format?.toLowerCase() === 'svg') {
+      return 'svg';
+    }
+
+    if (acceptHeader?.toLowerCase().includes('image/png')) {
+      return 'png';
+    }
+
+    return 'svg';
   }
 
   @Get('categories')
