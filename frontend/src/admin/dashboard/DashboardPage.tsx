@@ -109,7 +109,7 @@ export function DashboardPage() {
         <CardContent className="space-y-4">
           {qrSvgQuery.isLoading ? (
             <div className="space-y-2">
-              <div className="mx-auto w-full max-w-[220px]">
+              <div className="mx-auto w-full max-w-full sm:max-w-[220px]">
                 <Skeleton className="h-[220px] w-full" />
               </div>
               <p className="text-center text-sm text-muted-foreground">{t('admin.dashboard.loadingQr')}</p>
@@ -119,7 +119,10 @@ export function DashboardPage() {
           {qrSvgQuery.error ? <ApiErrorAlert error={qrSvgQuery.error} /> : null}
 
           {!qrSvgQuery.isLoading && !qrSvgQuery.error && qrSvgQuery.data ? (
-            <div className="mx-auto w-full max-w-[220px]" dangerouslySetInnerHTML={{ __html: qrSvgQuery.data }} />
+            <div
+              className="mx-auto w-full max-w-full sm:max-w-[220px] [&>svg]:h-auto [&>svg]:w-full"
+              dangerouslySetInnerHTML={{ __html: qrSvgQuery.data }}
+            />
           ) : null}
 
           <div className="flex flex-wrap gap-2">
