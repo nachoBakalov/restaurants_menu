@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { Facebook, Globe, Instagram, MapPin, Phone } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import type { CreatePublicOrderPayload, PublicMenuItem } from '../api/public.types';
 import { createPublicOrder, fetchPublicMenu, fetchPublicRestaurant } from '../api/public.api';
@@ -38,6 +39,10 @@ function formatDateTime(value: string): string {
   }).format(date);
 }
 
+function normalizePhoneForTel(phoneNumber: string): string {
+  return phoneNumber.replace(/[^+\d]/g, '');
+}
+
 function PriceBlock({
   item,
   showBgn,
@@ -66,18 +71,19 @@ function PriceBlock({
   );
 }
 
-function formatAllergens(allergens: string | string[] | null | undefined): string | null {
+function parseAllergens(allergens: string | string[] | null | undefined): string[] {
   if (Array.isArray(allergens)) {
-    const values = allergens.map((entry) => entry.trim()).filter(Boolean);
-    return values.length > 0 ? values.join(', ') : null;
+    return allergens.map((entry) => entry.trim()).filter(Boolean);
   }
 
   if (typeof allergens === 'string') {
-    const value = allergens.trim();
-    return value.length > 0 ? value : null;
+    return allergens
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
   }
 
-  return null;
+  return [];
 }
 
 function PublicMenuContent() {
@@ -87,8 +93,6 @@ function PublicMenuContent() {
   const cart = useCart();
 
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
-  const [selectedItem, setSelectedItem] = useState<PublicMenuItem | null>(null);
-  const [itemQty, setItemQty] = useState(1);
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,6 +104,8 @@ function PublicMenuContent() {
   const [note, setNote] = useState('');
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [successOrder, setSuccessOrder] = useState<{ orderId: string; status: string } | null>(null);
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const clickScrollLockUntil = useRef(0);
 
   const restaurantQuery = useQuery({
     queryKey: ['public-restaurant', slug],
@@ -147,11 +153,93 @@ function PublicMenuContent() {
     );
   }, [categories, normalizedSearch]);
 
+  const phoneNumber = restaurant?.phoneNumber?.trim() ?? '';
+  const normalizedPhone = phoneNumber ? normalizePhoneForTel(phoneNumber) : '';
+  const address = restaurant?.address?.trim() ?? '';
+  const mapsLink = address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+    : '';
+  const facebookLink = restaurant?.socialLinks?.facebook?.trim() ?? '';
+  const instagramLink = restaurant?.socialLinks?.instagram?.trim() ?? '';
+  const googleBusinessLink = restaurant?.socialLinks?.googleBusiness?.trim() ?? '';
+  const hasContactInfo = Boolean(phoneNumber || address || facebookLink || instagramLink || googleBusinessLink);
+  const getCartQty = (itemId: string) => cart.items.find((entry) => entry.itemId === itemId)?.qty ?? 0;
+
+  const addOrIncrementItem = (item: PublicMenuItem) => {
+    const currentQty = getCartQty(item.id);
+
+    if (currentQty > 0) {
+      cart.increment(item.id);
+      return;
+    }
+
+    cart.addItem({
+      itemId: item.id,
+      name: item.name,
+      unitPrice: {
+        eurCents: item.pricing.prices.EUR.currentCents,
+        bgnCents: showBgn ? (item.pricing.prices.BGN?.currentCents ?? null) : null,
+      },
+      qty: 1,
+    });
+  };
+
   useEffect(() => {
     if (!activeCategoryId && categories.length > 0) {
       setActiveCategoryId(categories[0].id);
     }
   }, [categories, activeCategoryId]);
+
+  useEffect(() => {
+    if (normalizedSearch || categories.length === 0) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (Date.now() < clickScrollLockUntil.current) {
+          return;
+        }
+
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        const firstVisible = visible[0];
+        if (!firstVisible) {
+          return;
+        }
+
+        const categoryId = (firstVisible.target as HTMLElement).dataset.categoryId;
+        if (categoryId) {
+          setActiveCategoryId(categoryId);
+        }
+      },
+      {
+        threshold: [0.4, 0.6],
+      },
+    );
+
+    categories.forEach((category) => {
+      const section = sectionRefs.current[category.id];
+      if (section) {
+        observer.observe(section);
+      }
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [categories, normalizedSearch]);
+
+  useEffect(() => {
+    if (!activeCategoryId) {
+      return;
+    }
+
+    const activeTab = document.getElementById(`category-tab-${activeCategoryId}`);
+    activeTab?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [activeCategoryId]);
 
   useEffect(() => {
     if (cart.items.length === 0 && isCheckoutOpen) {
@@ -175,7 +263,7 @@ function PublicMenuContent() {
   const heroStyle = useMemo(
     () => ({
       backgroundImage: restaurant?.coverImageUrl
-        ? `linear-gradient(to top, rgba(0,0,0,0.50), rgba(0,0,0,0.15)), url(${restaurant.coverImageUrl})`
+        ? `url(${restaurant.coverImageUrl})`
         : 'linear-gradient(135deg, hsl(var(--muted)), hsl(var(--accent)))',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
@@ -237,10 +325,12 @@ function PublicMenuContent() {
     <main className={`min-h-screen ${theme.pageClassName}`}>
       <div className="mx-auto w-full max-w-7xl px-4 py-4 md:px-6 md:py-6 ">
         <section
-          className={`${theme.heroClassName} overflow-hidden transition-all duration-300`}
+          className={`${theme.heroClassName} relative overflow-hidden transition-all duration-300`}
           style={heroStyle}
         >
-          <div className={`p-5 md:p-8 ${restaurant.coverImageUrl ? 'text-white' : ''}`}>
+          {restaurant.coverImageUrl ? <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/30" /> : null}
+
+          <div className={`relative z-10 p-5 md:p-8 ${restaurant.coverImageUrl ? 'text-white' : ''}`}>
             <div className="flex items-center gap-4 ">
               {restaurant.logoUrl ? (
                 <img
@@ -253,10 +343,72 @@ function PublicMenuContent() {
                 <div className="h-16 w-16 rounded-full border-2 border-background/60 bg-background/40 md:h-20 md:w-20" />
               )}
               <div>
-                <h1 className="text-2xl font-semibold md:text-3xl">{restaurant.name}</h1>
+                <h1 className="text-2xl font-semibold md:text-3xl" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.35)' }}>
+                  {restaurant.name}
+                </h1>
                 {/* <p className={`text-sm ${restaurant.coverImageUrl ? 'text-white/90' : 'text-muted-foreground'}`}>/{restaurant.slug}</p> */}
               </div>
             </div>
+
+            {hasContactInfo ? (
+              <div className={`mt-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between ${restaurant.coverImageUrl ? 'text-white/90' : 'text-muted-foreground'}`}>
+                <div className="space-y-1 text-sm">
+                  {phoneNumber && normalizedPhone ? (
+                    <a href={`tel:${normalizedPhone}`} className="inline-flex items-center gap-2 hover:underline">
+                      <Phone className="h-4 w-4" aria-hidden="true" />
+                      <span>{t('public.header.call')}: {phoneNumber}</span>
+                    </a>
+                  ) : null}
+
+                  {address ? (
+                    <div className="inline-flex items-start gap-2">
+                      <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                      <a href={mapsLink} target="_blank" rel="noopener noreferrer" className="line-clamp-2 hover:underline">
+                        {t('public.header.address')}: {address}
+                      </a>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {facebookLink ? (
+                    <a
+                      href={facebookLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={t('public.header.facebook')}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-current/30 transition-all duration-200 ease-out hover:scale-105 hover:bg-background/10 active:scale-95"
+                    >
+                      <Facebook className="h-4 w-4" aria-hidden="true" />
+                    </a>
+                  ) : null}
+
+                  {instagramLink ? (
+                    <a
+                      href={instagramLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={t('public.header.instagram')}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-current/30 transition-all duration-200 ease-out hover:scale-105 hover:bg-background/10 active:scale-95"
+                    >
+                      <Instagram className="h-4 w-4" aria-hidden="true" />
+                    </a>
+                  ) : null}
+
+                  {googleBusinessLink ? (
+                    <a
+                      href={googleBusinessLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={t('public.header.googleBusiness')}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-current/30 transition-all duration-200 ease-out hover:scale-105 hover:bg-background/10 active:scale-95"
+                    >
+                      <Globe className="h-4 w-4" aria-hidden="true" />
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </div>
         </section>
 
@@ -270,12 +422,12 @@ function PublicMenuContent() {
           {!orderingAllowedNow ? (
             <p className="mt-2 text-xs text-muted-foreground">
               {!orderingFeatureEnabled
-                ? 'Поръчките не са налични за този ресторант.'
+                ? t('public.common.outOfHours')
                 : !orderingVisible
-                  ? 'Поръчките са временно скрити.'
+                  ? t('public.common.outOfHours')
                   : restaurant.ordering.nextOpenAt
                     ? `Следващо отваряне: ${formatDateTime(restaurant.ordering.nextOpenAt)}`
-                    : 'Поръчките в момента не се приемат.'}
+                    : t('public.common.outOfHours')}
             </p>
           ) : null}
         </section>
@@ -284,13 +436,21 @@ function PublicMenuContent() {
           <div className="flex gap-2 overflow-x-auto pb-1">
             {categories.map((category) => (
               <Button
+                id={`category-tab-${category.id}`}
                 key={category.id}
                 type="button"
                 size="sm"
                 variant={activeCategoryId === category.id ? 'default' : 'outline'}
+                className="transition-all duration-200 ease-out"
                 onClick={() => {
                   setActiveCategoryId(category.id);
-                  document.getElementById(`category-${category.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  clickScrollLockUntil.current = Date.now() + 800;
+                  sectionRefs.current[category.id]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  document.getElementById(`category-tab-${category.id}`)?.scrollIntoView({
+                    behavior: 'smooth',
+                    inline: 'center',
+                    block: 'nearest',
+                  });
                 }}
               >
                 {category.name}
@@ -304,10 +464,13 @@ function PublicMenuContent() {
             searchResults.length > 0 ? (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {searchResults.map((item) => {
-                  const allergensText = formatAllergens(item.allergens as string | string[] | null | undefined);
+                  const allergens = parseAllergens(item.allergens as string | string[] | null | undefined);
+                  const visibleAllergens = allergens.slice(0, 4);
+                  const moreAllergensCount = Math.max(0, allergens.length - visibleAllergens.length);
+                  const qtyInCart = getCartQty(item.id);
 
                   return (
-                    <Card key={`${item.categoryName}-${item.id}`} className={`${theme.cardClassName} transition-transform duration-200 hover:-translate-y-0.5`}>
+                    <Card key={`${item.categoryName}-${item.id}`} className={`${theme.cardClassName} group transition-all duration-200 ease-out md:hover:-translate-y-0.5 md:hover:shadow-md`}>
                       <CardContent className="space-y-3 p-4">
                         {item.imageUrl ? (
                           <img
@@ -318,7 +481,7 @@ function PublicMenuContent() {
                               event.currentTarget.onerror = null;
                               event.currentTarget.src = '/placeholder-food.png';
                             }}
-                            className="h-40 w-full rounded-md object-cover"
+                            className="h-40 w-full rounded-md object-cover transition-transform duration-200 ease-out md:group-hover:scale-[1.02]"
                           />
                         ) : (
                           <div className="h-40 w-full rounded-md bg-gradient-to-br from-muted to-accent/50" />
@@ -328,10 +491,17 @@ function PublicMenuContent() {
                           <h3 className="text-base font-semibold">{item.name}</h3>
                           <p className="text-xs text-muted-foreground">{item.categoryName}</p>
                           {item.description ? <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p> : null}
-                          {allergensText ? (
-                            <p className="line-clamp-2 text-xs text-muted-foreground">
-                              {t('public.menu.allergensLabel')}: {allergensText}
-                            </p>
+                          {visibleAllergens.length > 0 ? (
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {visibleAllergens.map((allergen) => (
+                                <Badge key={`${item.id}-${allergen}`} variant="secondary" className="text-[10px]">
+                                  {allergen}
+                                </Badge>
+                              ))}
+                              {moreAllergensCount > 0 ? (
+                                <Badge variant="secondary" className="text-[10px]">+{moreAllergensCount}</Badge>
+                              ) : null}
+                            </div>
                           ) : null}
                         </div>
 
@@ -339,28 +509,27 @@ function PublicMenuContent() {
 
                         {orderingAllowedNow ? (
                           <div className="flex items-center justify-between gap-2">
-                            <Button type="button" variant="outline" size="sm" onClick={() => setSelectedItem(item)}>
-                              {t('admin.menu.editItem')}
-                            </Button>
-
                             <Button
                               type="button"
                               size="sm"
+                              className="transition-all duration-200 ease-out hover:brightness-105 active:scale-[0.98]"
                               disabled={!item.isAvailable}
-                              onClick={() =>
-                                cart.addItem({
-                                  itemId: item.id,
-                                  name: item.name,
-                                  unitPrice: {
-                                    eurCents: item.pricing.prices.EUR.currentCents,
-                                    bgnCents: showBgn ? (item.pricing.prices.BGN?.currentCents ?? null) : null,
-                                  },
-                                  qty: 1,
-                                })
-                              }
+                              onClick={() => addOrIncrementItem(item)}
                             >
                               {t('public.menu.add')}
                             </Button>
+
+                            {qtyInCart > 0 ? (
+                              <div className="flex items-center gap-1 rounded-md border px-1 py-1">
+                                <Button type="button" variant="outline" size="sm" onClick={() => cart.decrement(item.id)}>
+                                  -
+                                </Button>
+                                <span className="w-6 text-center text-xs font-medium">{qtyInCart}</span>
+                                <Button type="button" variant="outline" size="sm" onClick={() => cart.increment(item.id)}>
+                                  +
+                                </Button>
+                              </div>
+                            ) : null}
                           </div>
                         ) : null}
                       </CardContent>
@@ -373,7 +542,14 @@ function PublicMenuContent() {
             )
           ) : (
             categories.map((category) => (
-              <section key={category.id} id={`category-${category.id}`} className="scroll-mt-24 space-y-3">
+              <div
+                key={category.id}
+                data-category-id={category.id}
+                ref={(node) => {
+                  sectionRefs.current[category.id] = node;
+                }}
+                className="scroll-mt-28 space-y-3"
+              >
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold md:text-xl">{category.name}</h2>
                   <Badge variant="secondary">{category.items.length}</Badge>
@@ -381,10 +557,13 @@ function PublicMenuContent() {
 
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {category.items.map((item) => {
-                    const allergensText = formatAllergens(item.allergens as string | string[] | null | undefined);
+                    const allergens = parseAllergens(item.allergens as string | string[] | null | undefined);
+                    const visibleAllergens = allergens.slice(0, 4);
+                    const moreAllergensCount = Math.max(0, allergens.length - visibleAllergens.length);
+                    const qtyInCart = getCartQty(item.id);
 
                     return (
-                      <Card key={item.id} className={`${theme.cardClassName} transition-transform duration-200 hover:-translate-y-0.5`}>
+                      <Card key={item.id} className={`${theme.cardClassName} group transition-all duration-200 ease-out md:hover:-translate-y-0.5 md:hover:shadow-md`}>
                         <CardContent className="space-y-3 p-4">
                           {item.imageUrl ? (
                             <img
@@ -395,7 +574,7 @@ function PublicMenuContent() {
                                 event.currentTarget.onerror = null;
                                 event.currentTarget.src = '/placeholder-food.png';
                               }}
-                              className="h-40 w-full rounded-md object-cover"
+                              className="h-40 w-full rounded-md object-cover transition-transform duration-200 ease-out md:group-hover:scale-[1.02]"
                             />
                           ) : (
                             <div className="h-40 w-full rounded-md bg-gradient-to-br from-muted to-accent/50" />
@@ -404,10 +583,17 @@ function PublicMenuContent() {
                           <div className="space-y-1">
                             <h3 className="text-base font-semibold">{item.name}</h3>
                             {item.description ? <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p> : null}
-                            {allergensText ? (
-                              <p className="line-clamp-2 text-xs text-muted-foreground">
-                                {t('public.menu.allergensLabel')}: {allergensText}
-                              </p>
+                            {visibleAllergens.length > 0 ? (
+                              <div className="flex flex-wrap gap-1 pt-1">
+                                {visibleAllergens.map((allergen) => (
+                                  <Badge key={`${item.id}-${allergen}`} variant="secondary" className="text-[10px]">
+                                    {allergen}
+                                  </Badge>
+                                ))}
+                                {moreAllergensCount > 0 ? (
+                                  <Badge variant="secondary" className="text-[10px]">+{moreAllergensCount}</Badge>
+                                ) : null}
+                              </div>
                             ) : null}
                           </div>
 
@@ -415,28 +601,27 @@ function PublicMenuContent() {
 
                           {orderingAllowedNow ? (
                             <div className="flex items-center justify-between gap-2">
-                              <Button type="button" variant="outline" size="sm" onClick={() => setSelectedItem(item)}>
-                                {t('admin.menu.editItem')}
-                              </Button>
-
                               <Button
                                 type="button"
                                 size="sm"
+                                className="transition-all duration-200 ease-out hover:brightness-105 active:scale-[0.98]"
                                 disabled={!item.isAvailable}
-                                onClick={() =>
-                                  cart.addItem({
-                                    itemId: item.id,
-                                    name: item.name,
-                                    unitPrice: {
-                                      eurCents: item.pricing.prices.EUR.currentCents,
-                                      bgnCents: showBgn ? (item.pricing.prices.BGN?.currentCents ?? null) : null,
-                                    },
-                                    qty: 1,
-                                  })
-                                }
+                                onClick={() => addOrIncrementItem(item)}
                               >
                                 {t('public.menu.add')}
                               </Button>
+
+                              {qtyInCart > 0 ? (
+                                <div className="flex items-center gap-1 rounded-md border px-1 py-1">
+                                  <Button type="button" variant="outline" size="sm" onClick={() => cart.decrement(item.id)}>
+                                    -
+                                  </Button>
+                                  <span className="w-6 text-center text-xs font-medium">{qtyInCart}</span>
+                                  <Button type="button" variant="outline" size="sm" onClick={() => cart.increment(item.id)}>
+                                    +
+                                  </Button>
+                                </div>
+                              ) : null}
                             </div>
                           ) : null}
                         </CardContent>
@@ -444,7 +629,7 @@ function PublicMenuContent() {
                     );
                   })}
                 </div>
-              </section>
+              </div>
             ))
           )}
         </div>
@@ -452,32 +637,28 @@ function PublicMenuContent() {
 
       {orderingAllowedNow && cart.items.length > 0 ? (
         <>
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 p-3 backdrop-blur md:hidden">
+          <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur md:hidden">
             <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-              <div className="min-w-0">
-                <Button type="button" variant="outline" size="sm" onClick={() => setIsMobileCartOpen(true)}>
-                  {t('public.menu.cart')}
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  {cart.itemsCount} · {formatMoney(cart.totals.eurTotalCents, 'EUR')}
-                  {showBgn && cart.totals.bgnTotalCents !== null ? ` / ${formatMoney(cart.totals.bgnTotalCents, 'BGN')}` : ''}
+              <button type="button" className="min-w-0 text-left" onClick={() => setIsMobileCartOpen(true)}>
+                <p className="text-sm font-medium">
+                  {cart.itemsCount} {t('public.cart.itemsCount')} • {formatMoney(cart.totals.eurTotalCents, 'EUR')}
                 </p>
-              </div>
+              </button>
               <Button type="button" disabled={cart.items.length === 0} onClick={() => setIsCheckoutOpen(true)}>
-                {t('public.menu.order')}
+                {t('public.cart.checkout')}
               </Button>
             </div>
           </div>
 
-          <aside className="fixed right-6 top-24 z-20 hidden w-80 rounded-xl border bg-background p-4 shadow-sm md:block">
+          <aside className="fixed right-6 top-24 z-20 hidden w-80 rounded-xl border bg-background p-4 shadow-md md:block">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-semibold">{t('public.menu.cart')}</h3>
               <Badge variant="secondary">{cart.itemsCount}</Badge>
             </div>
             <div className="max-h-64 space-y-2 overflow-auto">
               {cart.items.map((entry) => (
-                <div key={entry.itemId} className="rounded border p-2 text-sm">
-                  <p className="font-medium">{entry.name}</p>
+                <div key={entry.itemId} className="rounded border p-2 text-sm transition-all duration-200 ease-out hover:bg-muted/30">
+                  <p className="truncate font-medium">{entry.name}</p>
                   <div className="mt-1 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1">
                       <Button type="button" variant="outline" size="sm" onClick={() => cart.decrement(entry.itemId)}>
@@ -508,7 +689,7 @@ function PublicMenuContent() {
                 <p className="text-xs text-muted-foreground">{formatMoney(cart.totals.bgnTotalCents, 'BGN')}</p>
               ) : null}
               <Button className="mt-3 w-full" type="button" disabled={cart.items.length === 0} onClick={() => setIsCheckoutOpen(true)}>
-                {t('public.menu.order')}
+                {t('public.cart.checkout')}
               </Button>
             </div>
           </aside>
@@ -556,79 +737,9 @@ function PublicMenuContent() {
               setIsMobileCartOpen(false);
               setIsCheckoutOpen(true);
             }}>
-              {t('public.menu.order')}
+              {t('public.cart.checkout')}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={Boolean(selectedItem)}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) {
-            setSelectedItem(null);
-            setItemQty(1);
-          }
-        }}
-      >
-        <DialogContent>
-          {selectedItem ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>{selectedItem.name}</DialogTitle>
-                <DialogDescription>{selectedItem.description ?? selectedItem.allergens ?? ''}</DialogDescription>
-              </DialogHeader>
-
-              {selectedItem.imageUrl ? (
-                <img
-                  src={selectedItem.imageUrl}
-                  alt={selectedItem.name}
-                  loading="lazy"
-                  onError={(event) => {
-                    event.currentTarget.onerror = null;
-                    event.currentTarget.src = '/placeholder-food.png';
-                  }}
-                  className="h-48 w-full rounded-md object-cover"
-                />
-              ) : null}
-
-              {formatAllergens(selectedItem.allergens as string | string[] | null | undefined) ? (
-                <p className="text-sm text-muted-foreground">
-                  {t('public.menu.allergensLabel')}: {formatAllergens(selectedItem.allergens as string | string[] | null | undefined)}
-                </p>
-              ) : null}
-
-              <PriceBlock item={selectedItem} showBgn={showBgn} />
-
-              {orderingAllowedNow ? (
-                <DialogFooter className="flex w-full items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => setItemQty((current) => Math.max(1, current - 1))}>-</Button>
-                    <span className="w-6 text-center">{itemQty}</span>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setItemQty((current) => current + 1)}>+</Button>
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      cart.addItem({
-                        itemId: selectedItem.id,
-                        name: selectedItem.name,
-                        unitPrice: {
-                          eurCents: selectedItem.pricing.prices.EUR.currentCents,
-                          bgnCents: showBgn ? (selectedItem.pricing.prices.BGN?.currentCents ?? null) : null,
-                        },
-                        qty: itemQty,
-                      });
-                      setSelectedItem(null);
-                      setItemQty(1);
-                    }}
-                  >
-                    {t('public.menu.add')}
-                  </Button>
-                </DialogFooter>
-              ) : null}
-            </>
-          ) : null}
         </DialogContent>
       </Dialog>
 

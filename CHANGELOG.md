@@ -35,6 +35,9 @@ All notable changes to this repository are documented in this file.
 - Admin Dashboard (`/admin`) now includes a QR card with live menu QR preview and direct SVG/PNG download actions, including SUPERADMIN scoped restaurant support via existing impersonation query injection.
 - Restaurant contact profile now supports optional `phoneNumber`, `address`, and `socialLinks` (`facebook`/`instagram`/`googleBusiness`) across SUPERADMIN restaurant management, OWNER/STAFF restaurant settings, and public restaurant responses.
 - Frontend admin UI now supports editing restaurant contact/social fields in SUPERADMIN `/admin/restaurants` edit dialog and OWNER/STAFF `/admin/settings` contacts section with trim-to-null save semantics.
+- Public menu hero now shows restaurant contact/social info (`phone`, `address`, `facebook`, `instagram`, `googleBusiness`) with accessible links and improved cover readability.
+- Public menu conversion polish (F7.6): single card CTA (`Добави`) with inline quantity controls, allergen chips, upgraded mobile sticky cart/desktop cart styling, and active category tracking with IntersectionObserver.
+- Fixed public category tab click behavior to always smooth-scroll to the correct section via stable refs + click-scroll observer lock, including sticky-header-safe section offsets.
 
 ### Validation
 - `backend`: `npm run build` ✅

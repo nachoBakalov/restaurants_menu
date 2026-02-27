@@ -15,6 +15,13 @@ export type PublicRestaurant = {
   slug: string;
   logoUrl: string | null;
   coverImageUrl: string | null;
+  phoneNumber: string | null;
+  address: string | null;
+  socialLinks: {
+    facebook?: string;
+    instagram?: string;
+    googleBusiness?: string;
+  } | null;
   currency: PublicCurrency;
   features: PublicFeatures;
   ordering: {
