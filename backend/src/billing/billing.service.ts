@@ -68,6 +68,16 @@ export class BillingService {
             slug: dto.slug,
             logoUrl: dto.logoUrl ?? null,
             coverImageUrl: dto.coverImageUrl ?? null,
+            phoneNumber: this.normalizeOptionalStringInput(dto.phoneNumber),
+            address: this.normalizeOptionalStringInput(dto.address),
+            ...(dto.socialLinks !== undefined
+              ? {
+                  socialLinks:
+                    this.normalizeSocialLinksInput(dto.socialLinks) === null
+                      ? Prisma.JsonNull
+                      : (this.normalizeSocialLinksInput(dto.socialLinks) as Prisma.InputJsonValue),
+                }
+              : {}),
           },
         });
 
@@ -100,6 +110,9 @@ export class BillingService {
           slug: result.restaurant.slug,
           logoUrl: result.restaurant.logoUrl,
           coverImageUrl: result.restaurant.coverImageUrl,
+          phoneNumber: result.restaurant.phoneNumber,
+          address: result.restaurant.address,
+          socialLinks: this.normalizeSocialLinksOutput(result.restaurant.socialLinks),
           createdAt: result.restaurant.createdAt.toISOString(),
           updatedAt: result.restaurant.updatedAt.toISOString(),
         },
@@ -128,6 +141,9 @@ export class BillingService {
         slug: true,
         logoUrl: true,
         coverImageUrl: true,
+        phoneNumber: true,
+        address: true,
+        socialLinks: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -140,6 +156,9 @@ export class BillingService {
         slug: restaurant.slug,
         logoUrl: restaurant.logoUrl,
         coverImageUrl: restaurant.coverImageUrl,
+        phoneNumber: restaurant.phoneNumber,
+        address: restaurant.address,
+        socialLinks: this.normalizeSocialLinksOutput(restaurant.socialLinks),
         createdAt: restaurant.createdAt.toISOString(),
         updatedAt: restaurant.updatedAt.toISOString(),
       })),
@@ -176,6 +195,18 @@ export class BillingService {
           ...(dto.slug !== undefined ? { slug: dto.slug } : {}),
           ...(dto.logoUrl !== undefined ? { logoUrl: dto.logoUrl } : {}),
           ...(dto.coverImageUrl !== undefined ? { coverImageUrl: dto.coverImageUrl } : {}),
+          ...(dto.phoneNumber !== undefined
+            ? { phoneNumber: this.normalizeOptionalStringInput(dto.phoneNumber) }
+            : {}),
+          ...(dto.address !== undefined ? { address: this.normalizeOptionalStringInput(dto.address) } : {}),
+          ...(dto.socialLinks !== undefined
+            ? {
+                socialLinks:
+                  this.normalizeSocialLinksInput(dto.socialLinks) === null
+                    ? Prisma.JsonNull
+                    : (this.normalizeSocialLinksInput(dto.socialLinks) as Prisma.InputJsonValue),
+              }
+            : {}),
         },
         select: {
           id: true,
@@ -183,6 +214,9 @@ export class BillingService {
           slug: true,
           logoUrl: true,
           coverImageUrl: true,
+          phoneNumber: true,
+          address: true,
+          socialLinks: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -194,6 +228,9 @@ export class BillingService {
         slug: updated.slug,
         logoUrl: updated.logoUrl,
         coverImageUrl: updated.coverImageUrl,
+        phoneNumber: updated.phoneNumber,
+        address: updated.address,
+        socialLinks: this.normalizeSocialLinksOutput(updated.socialLinks),
         createdAt: updated.createdAt.toISOString(),
         updatedAt: updated.updatedAt.toISOString(),
       };
@@ -315,6 +352,9 @@ export class BillingService {
         orderingVisible: true,
         orderingTimezone: true,
         orderingSchedule: true,
+        phoneNumber: true,
+        address: true,
+        socialLinks: true,
       },
     });
 
@@ -326,6 +366,9 @@ export class BillingService {
       orderingVisible: restaurant.orderingVisible,
       orderingTimezone: restaurant.orderingTimezone,
       orderingSchedule: (restaurant.orderingSchedule as Record<string, unknown> | null) ?? null,
+      phoneNumber: restaurant.phoneNumber,
+      address: restaurant.address,
+      socialLinks: this.normalizeSocialLinksOutput(restaurant.socialLinks),
     };
   }
 
@@ -357,11 +400,26 @@ export class BillingService {
                   : (dto.orderingSchedule as Prisma.InputJsonValue),
             }
           : {}),
+        ...(dto.phoneNumber !== undefined
+          ? { phoneNumber: this.normalizeOptionalStringInput(dto.phoneNumber) }
+          : {}),
+        ...(dto.address !== undefined ? { address: this.normalizeOptionalStringInput(dto.address) } : {}),
+        ...(dto.socialLinks !== undefined
+          ? {
+              socialLinks:
+                this.normalizeSocialLinksInput(dto.socialLinks) === null
+                  ? Prisma.JsonNull
+                  : (this.normalizeSocialLinksInput(dto.socialLinks) as Prisma.InputJsonValue),
+            }
+          : {}),
       },
       select: {
         orderingVisible: true,
         orderingTimezone: true,
         orderingSchedule: true,
+        phoneNumber: true,
+        address: true,
+        socialLinks: true,
       },
     });
 
@@ -369,6 +427,9 @@ export class BillingService {
       orderingVisible: updated.orderingVisible,
       orderingTimezone: updated.orderingTimezone,
       orderingSchedule: (updated.orderingSchedule as Record<string, unknown> | null) ?? null,
+      phoneNumber: updated.phoneNumber,
+      address: updated.address,
+      socialLinks: this.normalizeSocialLinksOutput(updated.socialLinks),
     };
   }
 
@@ -431,5 +492,79 @@ export class BillingService {
     }
 
     return user.restaurantId;
+  }
+
+  private normalizeOptionalStringInput(value: string | null | undefined): string | null | undefined {
+    if (value === undefined) {
+      return undefined;
+    }
+
+    if (value === null) {
+      return null;
+    }
+
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+
+  private normalizeSocialLinksInput(
+    socialLinks:
+      | {
+          facebook?: string | null;
+          instagram?: string | null;
+          googleBusiness?: string | null;
+        }
+      | null
+      | undefined,
+  ): Record<string, string> | null | undefined {
+    if (socialLinks === undefined) {
+      return undefined;
+    }
+
+    if (socialLinks === null) {
+      return null;
+    }
+
+    const normalized: Record<string, string> = {};
+    const facebook = this.normalizeOptionalStringInput(socialLinks.facebook);
+    const instagram = this.normalizeOptionalStringInput(socialLinks.instagram);
+    const googleBusiness = this.normalizeOptionalStringInput(socialLinks.googleBusiness);
+
+    if (facebook) {
+      normalized.facebook = facebook;
+    }
+
+    if (instagram) {
+      normalized.instagram = instagram;
+    }
+
+    if (googleBusiness) {
+      normalized.googleBusiness = googleBusiness;
+    }
+
+    return Object.keys(normalized).length > 0 ? normalized : null;
+  }
+
+  private normalizeSocialLinksOutput(socialLinks: Prisma.JsonValue | null): Record<string, string> | null {
+    if (!socialLinks || typeof socialLinks !== 'object' || Array.isArray(socialLinks)) {
+      return null;
+    }
+
+    const source = socialLinks as Record<string, unknown>;
+    const normalized: Record<string, string> = {};
+
+    if (typeof source.facebook === 'string' && source.facebook.trim().length > 0) {
+      normalized.facebook = source.facebook.trim();
+    }
+
+    if (typeof source.instagram === 'string' && source.instagram.trim().length > 0) {
+      normalized.instagram = source.instagram.trim();
+    }
+
+    if (typeof source.googleBusiness === 'string' && source.googleBusiness.trim().length > 0) {
+      normalized.googleBusiness = source.googleBusiness.trim();
+    }
+
+    return Object.keys(normalized).length > 0 ? normalized : null;
   }
 }

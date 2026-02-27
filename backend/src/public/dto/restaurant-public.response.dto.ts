@@ -23,6 +23,9 @@ export class RestaurantPublicResponseDto {
   slug!: string;
   logoUrl!: string | null;
   coverImageUrl!: string | null;
+  phoneNumber!: string | null;
+  address!: string | null;
+  socialLinks!: Record<string, string> | null;
   currency!: RestaurantCurrencyDto;
   features!: RestaurantPublicFeaturesDto;
   ordering!: RestaurantPublicOrderingDto;

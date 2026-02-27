@@ -72,6 +72,9 @@ model Restaurant {
   slug                     String                      @unique
   logoUrl                  String?
   coverImageUrl            String?
+  phoneNumber              String?
+  address                  String?
+  socialLinks              Json?
   orderingVisible          Boolean                     @default(true)
   orderingTimezone         String                      @default("Europe/Sofia")
   orderingSchedule         Json?

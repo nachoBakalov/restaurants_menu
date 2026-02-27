@@ -8,6 +8,29 @@ type RestaurantCurrencyContext = {
 
 type CategoryWithItems = Category & { items: Item[] };
 
+function mapRestaurantSocialLinks(socialLinks: unknown): Record<string, string> | null {
+  if (!socialLinks || typeof socialLinks !== 'object' || Array.isArray(socialLinks)) {
+    return null;
+  }
+
+  const source = socialLinks as Record<string, unknown>;
+  const normalized: Record<string, string> = {};
+
+  if (typeof source.facebook === 'string' && source.facebook.trim().length > 0) {
+    normalized.facebook = source.facebook.trim();
+  }
+
+  if (typeof source.instagram === 'string' && source.instagram.trim().length > 0) {
+    normalized.instagram = source.instagram.trim();
+  }
+
+  if (typeof source.googleBusiness === 'string' && source.googleBusiness.trim().length > 0) {
+    normalized.googleBusiness = source.googleBusiness.trim();
+  }
+
+  return Object.keys(normalized).length > 0 ? normalized : null;
+}
+
 export function mapRestaurantPublic(
   restaurant: Restaurant,
   now: Date,
@@ -36,6 +59,9 @@ export function mapRestaurantPublic(
     slug: restaurant.slug,
     logoUrl: restaurant.logoUrl,
     coverImageUrl: restaurant.coverImageUrl,
+    phoneNumber: restaurant.phoneNumber,
+    address: restaurant.address,
+    socialLinks: mapRestaurantSocialLinks(restaurant.socialLinks),
     currency: {
       primary: restaurant.currencyPrimary,
       secondaryEnabled: restaurant.currencySecondaryEnabled,
