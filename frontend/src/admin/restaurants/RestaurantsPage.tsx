@@ -25,6 +25,25 @@ function toOptionalString(value: string): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function toNullableString(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function toSocialLinksPayload(values: { facebook?: string; instagram?: string; googleBusiness?: string }) {
+  const facebook = toNullableString(values.facebook ?? '');
+  const instagram = toNullableString(values.instagram ?? '');
+  const googleBusiness = toNullableString(values.googleBusiness ?? '');
+
+  const socialLinks = {
+    ...(facebook ? { facebook } : {}),
+    ...(instagram ? { instagram } : {}),
+    ...(googleBusiness ? { googleBusiness } : {}),
+  };
+
+  return Object.keys(socialLinks).length > 0 ? socialLinks : null;
+}
+
 export function RestaurantsPage() {
   const { t } = useT();
   const navigate = useNavigate();
@@ -47,6 +66,11 @@ export function RestaurantsPage() {
         ownerPassword: z.string().min(6, t('auth.validation.passwordMin')),
         logoUrl: z.string().optional(),
         coverImageUrl: z.string().optional(),
+        phoneNumber: z.string().max(50).optional(),
+        address: z.string().max(300).optional(),
+        facebook: z.string().max(2048).optional(),
+        instagram: z.string().max(2048).optional(),
+        googleBusiness: z.string().max(2048).optional(),
       }),
     [t],
   );
@@ -61,6 +85,11 @@ export function RestaurantsPage() {
           .regex(/^[a-z0-9-]+$/, t('auth.validation.slugPattern')),
         logoUrl: z.string().optional(),
         coverImageUrl: z.string().optional(),
+        phoneNumber: z.string().max(50).optional(),
+        address: z.string().max(300).optional(),
+        facebook: z.string().max(2048).optional(),
+        instagram: z.string().max(2048).optional(),
+        googleBusiness: z.string().max(2048).optional(),
       }),
     [t],
   );
@@ -87,11 +116,19 @@ export function RestaurantsPage() {
       slug: '',
       logoUrl: '',
       coverImageUrl: '',
+      phoneNumber: '',
+      address: '',
+      facebook: '',
+      instagram: '',
+      googleBusiness: '',
     },
   });
 
   const watchedLogoUrl = editForm.watch('logoUrl');
   const watchedCoverImageUrl = editForm.watch('coverImageUrl');
+  const watchedFacebook = editForm.watch('facebook');
+  const watchedInstagram = editForm.watch('instagram');
+  const watchedGoogleBusiness = editForm.watch('googleBusiness');
 
   const restaurantsQuery = useQuery({
     queryKey: ['admin-restaurants'],
@@ -140,6 +177,13 @@ export function RestaurantsPage() {
         slug: values.slug.trim(),
         logoUrl: toOptionalString(values.logoUrl ?? '') ?? null,
         coverImageUrl: toOptionalString(values.coverImageUrl ?? '') ?? null,
+        phoneNumber: toNullableString(values.phoneNumber ?? ''),
+        address: toNullableString(values.address ?? ''),
+        socialLinks: toSocialLinksPayload({
+          facebook: values.facebook,
+          instagram: values.instagram,
+          googleBusiness: values.googleBusiness,
+        }),
       };
 
       return updateRestaurant(editingRestaurant.id, payload);
@@ -254,6 +298,11 @@ export function RestaurantsPage() {
                                 slug: restaurant.slug,
                                 logoUrl: restaurant.logoUrl ?? '',
                                 coverImageUrl: restaurant.coverImageUrl ?? '',
+                                phoneNumber: restaurant.phoneNumber ?? '',
+                                address: restaurant.address ?? '',
+                                facebook: restaurant.socialLinks?.facebook ?? '',
+                                instagram: restaurant.socialLinks?.instagram ?? '',
+                                googleBusiness: restaurant.socialLinks?.googleBusiness ?? '',
                               });
                               setIsEditDialogOpen(true);
                             }}
@@ -417,6 +466,61 @@ export function RestaurantsPage() {
             <div className="space-y-2">
               <Label htmlFor="edit-cover-url">{t('admin.restaurants.fields.coverImageUrl')}</Label>
               <Input id="edit-cover-url" {...editForm.register('coverImageUrl')} disabled={editMutation.isPending} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">{t('admin.restaurant.phone')}</Label>
+              <Input id="edit-phone" {...editForm.register('phoneNumber')} disabled={editMutation.isPending} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-address">{t('admin.restaurant.address')}</Label>
+              <Input id="edit-address" {...editForm.register('address')} disabled={editMutation.isPending} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-facebook">{t('admin.restaurant.social.facebook')}</Label>
+              <Input id="edit-facebook" {...editForm.register('facebook')} disabled={editMutation.isPending} />
+              {toOptionalString(watchedFacebook ?? '') ? (
+                <a
+                  href={toOptionalString(watchedFacebook ?? '')}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-primary underline"
+                >
+                  {toOptionalString(watchedFacebook ?? '')}
+                </a>
+              ) : null}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-instagram">{t('admin.restaurant.social.instagram')}</Label>
+              <Input id="edit-instagram" {...editForm.register('instagram')} disabled={editMutation.isPending} />
+              {toOptionalString(watchedInstagram ?? '') ? (
+                <a
+                  href={toOptionalString(watchedInstagram ?? '')}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-primary underline"
+                >
+                  {toOptionalString(watchedInstagram ?? '')}
+                </a>
+              ) : null}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-google-business">{t('admin.restaurant.social.googleBusiness')}</Label>
+              <Input id="edit-google-business" {...editForm.register('googleBusiness')} disabled={editMutation.isPending} />
+              {toOptionalString(watchedGoogleBusiness ?? '') ? (
+                <a
+                  href={toOptionalString(watchedGoogleBusiness ?? '')}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-primary underline"
+                >
+                  {toOptionalString(watchedGoogleBusiness ?? '')}
+                </a>
+              ) : null}
             </div>
 
             {toOptionalString(watchedCoverImageUrl ?? '') ? (

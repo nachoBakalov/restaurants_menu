@@ -6,6 +6,13 @@ export type Restaurant = {
   slug: string;
   logoUrl?: string | null;
   coverImageUrl?: string | null;
+  phoneNumber?: string | null;
+  address?: string | null;
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    googleBusiness?: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -20,6 +27,13 @@ export type UpdateRestaurantDto = {
   slug?: string;
   logoUrl?: string | null;
   coverImageUrl?: string | null;
+  phoneNumber?: string | null;
+  address?: string | null;
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    googleBusiness?: string;
+  } | null;
 };
 
 export type CreateWithOwnerDto = {
@@ -29,6 +43,13 @@ export type CreateWithOwnerDto = {
   password: string;
   logoUrl?: string | null;
   coverImageUrl?: string | null;
+  phoneNumber?: string | null;
+  address?: string | null;
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    googleBusiness?: string;
+  } | null;
 };
 
 export type CreateWithOwnerResponse = {
@@ -38,6 +59,13 @@ export type CreateWithOwnerResponse = {
     slug: string;
     logoUrl?: string | null;
     coverImageUrl?: string | null;
+    phoneNumber?: string | null;
+    address?: string | null;
+    socialLinks?: {
+      facebook?: string;
+      instagram?: string;
+      googleBusiness?: string;
+    } | null;
     createdAt?: string;
     updatedAt?: string;
   };

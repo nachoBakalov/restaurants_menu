@@ -22,12 +22,26 @@ export type RestaurantSettings = {
   orderingVisible: boolean;
   orderingTimezone: string;
   orderingSchedule: OrderingSchedule | null;
+  phoneNumber: string | null;
+  address: string | null;
+  socialLinks: {
+    facebook?: string;
+    instagram?: string;
+    googleBusiness?: string;
+  } | null;
 };
 
 export type UpdateRestaurantSettingsPayload = {
   orderingVisible?: boolean;
   orderingTimezone?: string;
   orderingSchedule?: OrderingSchedule | null;
+  phoneNumber?: string | null;
+  address?: string | null;
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    googleBusiness?: string;
+  } | null;
 };
 
 export async function fetchRestaurantSettings(): Promise<RestaurantSettings> {
